@@ -60,6 +60,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Users add layout-binding rows with an `Add` button; do not prepopulate bindings.
 - Capture a shortcut by focusing its field and pressing the desired key or combination. Provide a `Clear` button.
 - Conflicting assignments block saving and show an explanation.
+- Include a shortcut test field in the prototype settings. It shows the detected key or combination, short tap versus hold, and assigned action without executing that action while testing.
 - Use `OK`, `Cancel`, and `Apply` buttons.
 - Closing settings with the window close button discards unapplied changes and leaves the application running in the tray.
 - Automatically open settings on first launch. Subsequent launches start in the tray.
@@ -78,7 +79,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Deferred by the user: explicit clipboard-text conversion, separate from selection conversion; this command intentionally changes clipboard contents. Not part of the prototype.
 - Transliteration as a separate command from keyboard-layout conversion.
 - Optional brief on-screen layout indicator after a manual switch.
-- Settings import/export and a shortcut test area showing detected keys and matched actions.
+- Settings import/export.
 - Later candidates: manually invoked text snippets and a separate convert-previous-word command. The latter would need a new scope decision; the existing selection command must still do nothing without a selection.
 - Do not add these features until approved. Automatic switching remains out of scope.
 - Research: [official Punto Switcher page](https://yandex.ru/soft/punto/win/); [third-party hotkey overview](https://puntos.ru/news/4-punto-switcher-gorjachie-klavishi-po-umolchaniju.html). The official detailed help was inaccessible during this review; third-party descriptions are not verification of the latest installed version.
