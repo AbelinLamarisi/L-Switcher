@@ -14,6 +14,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Minimal UI: system tray icon(s) and a settings window.
 - Support startup with Windows, controlled by a checkbox in settings; disabled by default.
 - Settings UI is English. The tray icon displays a two-letter abbreviation of the active layout.
+- Allow users to choose the color of the tray layout label in settings.
 - No automatic language detection or automatic switching while typing.
 - Allow direct activation of any installed keyboard layout through assigned keys, rather than cycling through layouts.
 - Support standalone modifier keys, distinguish left/right keys, and support media keys as assignment targets. Example mappings (not fixed defaults): Left Ctrl → Russian, Left Shift → English, a media key → German.
@@ -123,6 +124,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Implemented the .NET Framework 4.8 x64 project, settings UI, tray, single-instance activation, keyboard/mouse hooks, direct layout activation, exclusions, startup control, and JSON recovery/backup.
 - Implemented physical-key conversion, word-context punctuation, native Word character edits, and a guarded clipboard/UI Automation path with RTF/plain-text support.
 - Added dependency-free automated tests, a build script, UI/Word smoke tests, and GitHub Actions build/artifact configuration.
+- Implemented the subsequently approved Pause/Resume shortcut (including resuming during manual pause and exclusion passthrough), selection uppercase/lowercase/invert-case shortcuts, and a non-executing shortcut test field with tap/hold timing and draft assignment feedback. Existing schema-one settings default these new shortcuts to unassigned.
 - Verified native Word conversion with bold/italic/color, paragraphs, selection retention, unchanged active layout, and protected/empty selections. Verified the clipboard/UIA path on a temporary editable RichTextBox, including RTF formatting, selection retention, read-only behavior, and restoration of text/custom clipboard formats. These checks do not replace application-specific acceptance in VS Code and Chrome.
 - Verify the prototype in VS Code, Chrome, and Word; distinguish automated checks from manual compatibility acceptance in the completion report.
 - Review shared-alphabet defaults and complex rich-text behavior after use.
