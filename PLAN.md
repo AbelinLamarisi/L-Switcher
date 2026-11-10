@@ -21,6 +21,8 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Support ordinary key combinations such as Ctrl+Alt+R.
 - First launch has no key assignments; the user configures all bindings.
 - Include a tray command to pause hotkeys.
+- Short-tap time limit defaults to 300 ms and is configurable in settings.
+- Store settings as JSON in `%LOCALAPPDATA%\L-Switcher\settings.json`, with a schema version, safe replacement on save, and a backup of the previous valid configuration.
 - Aim for compatibility with most Windows applications. Games are out of scope for now.
 - Convert selected text between a configured pair of layouts; swap mixed text in both directions within that pair.
 - Keep the converted text selected.
@@ -33,7 +35,6 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 ## Proposals awaiting agreement
 
 - First release focuses on layout activation, selection conversion, and settings.
-- Store settings as JSON in `%LOCALAPPDATA%\L-Switcher\settings.json`. Use a schema version, safe replacement on save, and a last-known-good backup. Storage choice is not yet approved.
 
 ## Technology decision rationale
 
@@ -49,7 +50,6 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ### Key handling
 
-- Choose the short-tap time limit and whether it is configurable (proposal: 300 ms).
 - Decide whether paused state persists across restarts.
 
 ### Selection conversion
@@ -74,7 +74,6 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Static tray icon or active-layout indicator?
 - Settings UI language: Russian, English, or both?
 - Should startup with Windows be enabled by default?
-- Portable settings beside the executable or per-user settings?
 - Manual releases or update checking?
 - Open-source license?
 - Resource usage and executable size preferences?
@@ -83,7 +82,6 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ### Minimum decisions before the prototype
 
-- Choose the short-tap time limit.
 - Choose conversion pair configuration; all key bindings are user-defined with no initial assignments.
 - Confirm whether conversion changes the active layout.
 - Agree on temporary clipboard use and plain-text conversion scope.
