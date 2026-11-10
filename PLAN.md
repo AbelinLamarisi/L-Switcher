@@ -81,7 +81,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Deferred by the user: optional brief on-screen layout indicator after switching with an L-Switcher hotkey. Not part of the prototype.
 - Deferred by the user: settings import/export through a JSON file. Not part of the prototype.
 - Deferred by the user: manually invoked text snippets. Not part of the prototype.
-- Pending review: a separate convert-previous-word command. This would need a new scope decision; the existing selection command must still do nothing without a selection.
+- Deferred by the user: a separate convert-previous-word command without prior selection. Not part of the prototype; the existing selection command must still do nothing without a selection.
 - Do not add these features until approved. Automatic switching remains out of scope.
 - Research: [official Punto Switcher page](https://yandex.ru/soft/punto/win/); [third-party hotkey overview](https://puntos.ru/news/4-punto-switcher-gorjachie-klavishi-po-umolchaniju.html). The official detailed help was inaccessible during this review; third-party descriptions are not verification of the latest installed version.
 
