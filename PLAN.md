@@ -31,6 +31,15 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ## Open questions
 
+### Technology evaluation (proposal, not accepted)
+
+- Recommended for development simplicity: C# with Windows Forms and Win32 interop, published as a self-contained Windows x64 single-file executable. Users do not install .NET. Native runtime files may be extracted on launch; confirm that this meets the standalone-executable requirement. Bundling the runtime increases distribution size.
+- Alternative for a compact native utility: C++ with Win32 and statically linked CRT. More manual UI and resource-management code; requires C++ Build Tools and Windows SDK.
+- Rust with Win32 remains possible, but adds Rust tooling alongside the MSVC build prerequisites and does not simplify this small Windows-only UI enough to be the preferred choice.
+- Local check: `dotnet` is available, but `dotnet --list-sdks` returned no SDKs. Development SDK installation is still needed for the C# option.
+- Decide whether smaller executable/resource usage or simpler development takes priority. Do not promise exact memory or binary size without a prototype.
+- Sources: [single-file deployment](https://learn.microsoft.com/en-us/dotnet/core/deploying/single-file), [WinForms tray component](https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/notifyicon-component-windows-forms), [static CRT](https://learn.microsoft.com/en-us/cpp/build/reference/md-mt-ld-use-run-time-library), [Rust installation](https://rust-lang.org/tools/install/).
+
 ### Key handling
 
 - Confirm release-based activation and cancellation when a modifier participates in keyboard shortcuts or mouse actions.
