@@ -12,6 +12,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Keep the GitHub repository private for now. Future open-source distribution remains planned.
 - Target Windows 11 and later; ARM support is out of scope.
 - Minimal UI: system tray icon(s) and a settings window.
+- Support startup with Windows, controlled by a checkbox in settings. The default checkbox state is not yet decided.
 - No automatic language detection or automatic switching while typing.
 - Allow direct activation of any installed keyboard layout through assigned keys, rather than cycling through layouts.
 - Support standalone modifier keys, distinguish left/right keys, and support media keys as assignment targets. Example mappings (not fixed defaults): Left Ctrl → Russian, Left Shift → English, a media key → German.
@@ -70,13 +71,23 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 - Static tray icon or active-layout indicator?
 - Settings UI language: Russian, English, or both?
-- Optional startup with Windows?
+- Should startup with Windows be enabled by default?
 - Portable settings beside the executable or per-user settings?
 - Manual releases or update checking?
 - Open-source license?
 - Resource usage and executable size preferences?
 
 ## Next steps
+
+### Minimum decisions before the prototype
+
+- Confirm standalone-key activation semantics (release, shortcut/mouse cancellation, long holds) and suppression of assigned media-key actions.
+- Choose initial layout bindings, conversion shortcut, and conversion pair(s).
+- Confirm whether conversion changes the active layout.
+- Agree on temporary clipboard use and plain-text conversion scope.
+- Name initial application acceptance targets and decide whether elevated apps and RDP can be deferred.
+- Confirm startup default. Other UI, licensing, update, and advanced compatibility decisions can wait.
+- Prototype implementation still requires an explicit request; planning continues for now.
 
 1. Resolve key and conversion semantics.
 2. Agree on initial compatibility targets.
