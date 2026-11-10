@@ -117,7 +117,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 
 - Future update-check UI is agreed: `Check for updates` plus `Automatically check for updates`, disabled by default. When enabled, check on startup if due and subsequently no more than once per day. Background checks notify only when a new version is available; no-update results and temporary source failures remain silent. Manual checks always report their result. Installation remains manual. Activation still waits for a public metadata source; choose hosting then.
 - MIT selected for the future open-source release. The repository remains private. Add the license file and confirm copyright-holder details separately before distribution.
-- Resource usage and executable size preferences?
+- No hard numerical resource or executable-size limits for now. First measure executable size, memory, and CPU usage while idle in the tray, with settings open, and after repeated conversions. Avoid perceptible input delays, minimize idle CPU use, and investigate sustained memory growth. Decide optimization targets from measurements.
 
 ## Next steps
 

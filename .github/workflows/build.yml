@@ -1,0 +1,21 @@
+name: Windows build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - name: Build standalone executable
+        run: msbuild LSwitcher.csproj /t:Rebuild /p:Configuration=Release /p:Platform=x64 /m
+      - name: Build tests
+        run: msbuild tests/LSwitcher.Tests.csproj /t:Rebuild /p:Configuration=Release /p:Platform=x64 /m
+      - name: Run tests
+        run: ./tests/bin/Release/LSwitcher.Tests.exe --dpi-smoke
+      - uses: actions/upload-artifact@v4
+        with:
+          name: L-Switcher-win-x64
+          path: bin/Release/L-Switcher.exe
