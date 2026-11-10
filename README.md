@@ -53,4 +53,4 @@ Verified on the development machine on 2026-11-10: Release x64 build and 99 asse
 
 DPI follow-up on 2026-11-10: Release rebuild and 836 assertions passed with `--ui-smoke --dpi-smoke`. Rendered and inspected layouts at 100–300%, tested repeated `WM_DPICHANGED` transitions, dynamically added bindings, and the actual exclusion dialog. The process manifest was verified as PerMonitorV2. These transitions are simulated with window messages; moving between physical monitors with different scale factors has not been separately exercised. To load a rebuilt executable, exit the running instance through the tray before launching it again.
 
-See [PLAN.md](PLAN.md) for accepted decisions and remaining work. Licensing and releases have not yet been decided.
+See [PLAN.md](PLAN.md) for accepted decisions and remaining work. MIT is selected for the future open-source release; the license file and copyright-holder details will be handled before distribution. Update checking remains disabled until a public metadata source is available; test builds are updated manually.
