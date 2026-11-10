@@ -11,7 +11,18 @@ Install Visual Studio Build Tools 2022 with the components in `.vsconfig` (alrea
 .\bin\Release\L-Switcher.exe
 ```
 
-The release executable is standalone; copy `L-Switcher.exe` to a permanent folder before enabling startup. GitHub Actions builds it and uploads the `L-Switcher-win-x64` artifact on pushes and pull requests.
+The release executable is standalone; copy `L-Switcher.exe` to a permanent folder before enabling startup.
+
+## GitHub Actions
+
+The [Windows build and tests workflow](https://github.com/AbelinLamarisi/L-Switcher/actions/workflows/build.yml) runs on every push, pull request, and manual dispatch. It builds Release x64 on Windows Server 2022 using `build.ps1`, then runs the core tests and UI/DPI smoke checks. A failed build or assertion fails the job; the job has a 15-minute timeout.
+
+Download artifacts from a workflow run's summary:
+
+- `L-Switcher-win-x64`: the tested standalone `L-Switcher.exe`, retained for 30 days and uploaded only after all checks pass.
+- `L-Switcher-test-results`: build/test output and UI/DPI PNG previews, retained for 14 days and uploaded even when checks fail.
+
+Artifacts require access to this private repository. Word and clipboard integration checks remain local because they require Word or foreground desktop/clipboard access. This workflow does not create GitHub Releases or an installer.
 
 ## Configure
 
