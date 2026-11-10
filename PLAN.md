@@ -109,7 +109,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 ### Selection conversion
 
 - User deferred the final shared-alphabet ambiguity rule until practical testing. For now, words whose letters occur in both layouts inherit the preceding direction, initially First → Second; this remains a provisional implementation default, not the final accepted rule.
-- Broader rich-text and complex-document acceptance beyond the agreed Word cases remains open; plain-text fallback is allowed.
+- User chose basic Word formatting acceptance for the prototype: bold, italic, color, and multiple paragraphs. Broader checks for lists, tables, hyperlinks, mixed fonts, and sizes are deferred until later. Plain-text fallback remains allowed.
 
 ### UI and distribution
 
@@ -125,6 +125,8 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Implemented physical-key conversion, word-context punctuation, native Word character edits, and a guarded clipboard/UI Automation path with RTF/plain-text support.
 - Added dependency-free automated tests, a build script, UI/Word smoke tests, and GitHub Actions build/artifact configuration.
 - Implemented the subsequently approved Pause/Resume shortcut (including resuming during manual pause and exclusion passthrough), selection uppercase/lowercase/invert-case shortcuts, and a non-executing shortcut test field with tap/hold timing and draft assignment feedback. Existing schema-one settings default these new shortcuts to unassigned.
+- Implemented independent per-layout tray-label colors, with a color picker, preview, default reset, persistence, and retention for unavailable layouts.
+- Release x64 build and the full combined test run passed with 99 assertions on 2026-11-10. VS Code and Chrome manual acceptance and a hosted GitHub Actions run remain pending.
 - Verified native Word conversion with bold/italic/color, paragraphs, selection retention, unchanged active layout, and protected/empty selections. Verified the clipboard/UIA path on a temporary editable RichTextBox, including RTF formatting, selection retention, read-only behavior, and restoration of text/custom clipboard formats. These checks do not replace application-specific acceptance in VS Code and Chrome.
 - Verify the prototype in VS Code, Chrome, and Word; distinguish automated checks from manual compatibility acceptance in the completion report.
 - Review shared-alphabet defaults and complex rich-text behavior after use.
