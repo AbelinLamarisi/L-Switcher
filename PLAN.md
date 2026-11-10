@@ -26,12 +26,18 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Short-tap time limit defaults to 300 ms and is configurable in settings.
 - Store settings as JSON in `%LOCALAPPDATA%\L-Switcher\settings.json`, with a schema version, safe replacement on save, and a backup of the previous valid configuration.
 - Aim for compatibility with most Windows applications. Games are out of scope for now.
+- Initial acceptance applications: VS Code, Chrome, and Word. Elevated applications and Remote Desktop support are deferred.
+- Per-application exclusions are required in the prototype; their scope and configuration UI remain to be agreed.
+- If a configured layout is removed from Windows, retain its binding, show `Layout unavailable`, and disable that action while the layout is unavailable.
+- Run a single application instance. Launching the executable again opens settings in the existing instance.
 - Use one global configured conversion pair. Direction is selected in settings: `Swap both ways`, `First → Second`, or `Second → First`, independently of the currently active layout. Bidirectional mode swaps mixed text within the pair.
 - Leave the active layout unchanged after conversion.
+- Preserve case, spaces, and line breaks. Convert punctuation according to physical key positions. Leave characters outside the configured pair unchanged.
 - Temporary clipboard use with restoration of its contents is allowed if that implementation approach is selected.
 - Preserve internal text formatting where possible, including in the prototype. If formatting cannot be preserved, still convert using plain text with formatting loss. This supersedes the earlier prohibition on plain-text fallback.
 - Keep the converted text selected.
 - With no selection, the conversion command does nothing.
+- Do nothing for read-only selections.
 - Distribution must not require users to install dependencies: a standalone executable.
 - Installing the development toolchain on this machine should be straightforward.
 - Technology stack: C# + Windows Forms targeting .NET Framework 4.8, with Windows API interop where needed.
@@ -48,6 +54,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Capture a shortcut by focusing its field and pressing the desired key or combination. Provide a `Clear` button.
 - Conflicting assignments block saving and show an explanation.
 - Use `OK`, `Cancel`, and `Apply` buttons.
+- Closing settings with the window close button discards unapplied changes and leaves the application running in the tray.
 - Automatically open settings on first launch. Subsequent launches start in the tray.
 - A single left click on the tray icon opens settings. Right click opens `Settings…`, `Pause hotkeys` / `Resume hotkeys`, and `Exit`.
 - While paused, retain the two-letter active-layout label and add a small pause mark.
@@ -78,15 +85,11 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 ### Selection conversion
 
 - Define ambiguous shared-character behavior if `Swap both ways` is selected for overlapping alphabets. Explicit one-way modes are already agreed.
-- Preserve case, line breaks, and characters outside the selected pair? How should punctuation and ambiguous mappings behave?
 - Define supported rich-text formats/applications for formatting-preservation acceptance checks; plain-text fallback is allowed.
-- Is conversion of read-only selections required, and where should the result go?
 
 ### Compatibility
 
-- Which applications are the initial acceptance targets?
-- Are elevated applications, terminals, and Remote Desktop required?
-- Are per-application exclusions needed?
+- Define exclusion scope (all hotkeys or individual features), application matching, and the list-management UI.
 
 ### UI and distribution
 
@@ -100,7 +103,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 - Resolve direction-setting semantics for overlapping alphabets; all key bindings are user-defined with no initial assignments.
 - Agree on formatting-preservation acceptance cases.
-- Name initial application acceptance targets and decide whether elevated apps and RDP can be deferred.
+- Agree on per-application exclusion behavior and UI.
 - Licensing, updates, and advanced compatibility decisions can wait.
 - Prototype implementation still requires an explicit request; planning continues for now.
 
