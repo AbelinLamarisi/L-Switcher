@@ -9,6 +9,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 - Primarily for personal use, with public open-source distribution planned.
 - Repository name: L-Switcher.
+- Keep the GitHub repository private for now. Future open-source distribution remains planned.
 - Target Windows 11 and later; ARM support is out of scope.
 - Minimal UI: system tray icon(s) and a settings window.
 - No automatic language detection or automatic switching while typing.
@@ -27,7 +28,6 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Standalone modifiers trigger on release only if no other key or mouse operation participated in the gesture.
 - First release focuses on layout activation, selection conversion, and settings.
 - Candidate stacks to evaluate: C#/.NET, C++/Win32, Rust with Windows APIs.
-- GitHub repository is public, consistent with the requested open-source distribution. License still needs a decision.
 
 ## Open questions
 
