@@ -12,6 +12,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Keep the GitHub repository private for now. Future open-source distribution remains planned.
 - Target Windows 11 and later; ARM support is out of scope.
 - Minimal UI: system tray icon(s) and a settings window.
+- Support different display DPI/scale factors, including live transitions between monitors; text and buttons must not be clipped.
 - Support startup with Windows, controlled by a checkbox in settings; disabled by default.
 - Settings UI is English. The tray icon displays a two-letter abbreviation of the active layout.
 - Allow users to choose a separate tray-label color for each keyboard layout in settings.
@@ -115,7 +116,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 ### UI and distribution
 
 - Future update-check UI is agreed: `Check for updates` plus `Automatically check for updates`, disabled by default. When enabled, check on startup if due and subsequently no more than once per day. Background checks notify only when a new version is available; no-update results and temporary source failures remain silent. Manual checks always report their result. Installation remains manual. Activation still waits for a public metadata source; choose hosting then.
-- Open-source license?
+- MIT selected for the future open-source release. The repository remains private. Add the license file and confirm copyright-holder details separately before distribution.
 - Resource usage and executable size preferences?
 
 ## Next steps
@@ -127,6 +128,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Added dependency-free automated tests, a build script, UI/Word smoke tests, and GitHub Actions build/artifact configuration.
 - Implemented the subsequently approved Pause/Resume shortcut (including resuming during manual pause and exclusion passthrough), selection uppercase/lowercase/invert-case shortcuts, and a non-executing shortcut test field with tap/hold timing and draft assignment feedback. Existing schema-one settings default these new shortcuts to unassigned.
 - Implemented independent per-layout tray-label colors, with a color picker, preview, default reset, persistence, and retention for unavailable layouts.
+- Implemented per-monitor DPI handling in the executable manifest and a shared DPI-aware form base, with stable 96-DPI layout metrics, font/spacing rescaling, content-sized buttons/rows, dynamic binding scaling, and monitor work-area limits. No sidecar configuration is required. DPI/UI follow-up passed 836 assertions across 100–300% and repeated DPI messages, including the exclusion dialog; physical mixed-DPI monitor movement remains a manual check.
 - Release x64 build and the full combined test run passed with 99 assertions on 2026-11-10. VS Code and Chrome manual acceptance and a hosted GitHub Actions run remain pending.
 - Verified native Word conversion with bold/italic/color, paragraphs, selection retention, unchanged active layout, and protected/empty selections. Verified the clipboard/UIA path on a temporary editable RichTextBox, including RTF formatting, selection retention, read-only behavior, and restoration of text/custom clipboard formats. These checks do not replace application-specific acceptance in VS Code and Chrome.
 - Verify the prototype in VS Code, Chrome, and Word; distinguish automated checks from manual compatibility acceptance in the completion report.
