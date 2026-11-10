@@ -2,7 +2,7 @@
 
 ## Working agreement
 
-Planning and brainstorming only. Do not implement until explicitly requested.
+Implementation authorized by the user on 2026-11-10. Follow the accepted decisions below.
 Maintain this plan in English. Proposals are not accepted decisions until agreed.
 
 ## Accepted decisions
@@ -44,6 +44,8 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Installing the development toolchain on this machine should be straightforward.
 - Technology stack: C# + Windows Forms targeting .NET Framework 4.8, with Windows API interop where needed.
 - Do not bundle the runtime. Use the Windows-provided .NET Framework on Windows 11 and later; no separate modern .NET Desktop Runtime prerequisite.
+- In bidirectional conversion, convert mixed selections word by word. Resolve ambiguous punctuation from the preceding word's source layout (user clarification on 2026-11-10).
+- Word formatting acceptance starts with bold, italic, color, and multiple paragraphs (accepted on 2026-11-10).
 
 ## Proposals awaiting agreement
 
@@ -67,6 +69,20 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - The `Conversion` tab contains two layout selectors, a shortcut field, and the `Direction` selector described above.
 - Use standard Windows system styling for the prototype; no custom theme requirement.
 
+## Feature ideas for discussion (not approved)
+
+Inspired by Punto Switcher feature descriptions and the current L-Switcher scope:
+
+- Selection case commands: uppercase, lowercase, and invert case.
+- Explicit clipboard-text conversion, separate from selection conversion; this command intentionally changes clipboard contents.
+- Transliteration as a separate command from keyboard-layout conversion.
+- Optional brief on-screen layout indicator after a manual switch.
+- User-configurable shortcut to pause/resume hotkeys.
+- Settings import/export and a shortcut test area showing detected keys and matched actions.
+- Later candidates: manually invoked text snippets and a separate convert-previous-word command. The latter would need a new scope decision; the existing selection command must still do nothing without a selection.
+- Do not add these features until approved. Automatic switching remains out of scope.
+- Research: [official Punto Switcher page](https://yandex.ru/soft/punto/win/); [third-party hotkey overview](https://puntos.ru/news/4-punto-switcher-gorjachie-klavishi-po-umolchaniju.html). The official detailed help was inaccessible during this review; third-party descriptions are not verification of the latest installed version.
+
 ## Technology decision rationale
 
 - C# and WinForms simplify the small settings UI and tray integration.
@@ -83,14 +99,14 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Use minimal Visual Studio Build Tools rather than installing the full Visual Studio IDE. Select the components needed to build C# WinForms targeting .NET Framework 4.8 when implementation begins.
 - Third-party open-source libraries are allowed, but ask the user before adding each library. Prefer popular, actively maintained libraries; this preference does not replace individual approval.
 - Set up GitHub Actions automated builds from the start of implementation, rather than deferring CI until later.
-- Tool installation was explicitly authorized and completed on 2026-11-10. Application implementation still requires an explicit request; the planning-only agreement remains in effect for application code.
+- Tool installation was explicitly authorized and completed on 2026-11-10. Application implementation was subsequently authorized on the same day.
 
 ## Open questions
 
 ### Selection conversion
 
-- Define ambiguous shared-character behavior if `Swap both ways` is selected for overlapping alphabets. Explicit one-way modes are already agreed.
-- Define supported rich-text formats/applications for formatting-preservation acceptance checks; plain-text fallback is allowed.
+- For words whose letters occur in both layouts, the prototype inherits the preceding direction, initially First → Second. This is an implementation default pending usage feedback.
+- Broader rich-text and complex-document acceptance beyond the agreed Word cases remains open; plain-text fallback is allowed.
 
 ### UI and distribution
 
@@ -100,14 +116,11 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ## Next steps
 
-### Minimum decisions before the prototype
+### Prototype implementation (2026-11-10)
 
-- Resolve direction-setting semantics for overlapping alphabets; all key bindings are user-defined with no initial assignments.
-- Agree on formatting-preservation acceptance cases.
+- Implemented the .NET Framework 4.8 x64 project, settings UI, tray, single-instance activation, keyboard/mouse hooks, direct layout activation, exclusions, startup control, and JSON recovery/backup.
+- Implemented physical-key conversion, word-context punctuation, native Word character edits, and a guarded clipboard/UI Automation path with RTF/plain-text support.
+- Added dependency-free automated tests, a build script, UI/Word smoke tests, and GitHub Actions build/artifact configuration.
+- Verify the prototype in VS Code, Chrome, and Word; distinguish automated checks from manual compatibility acceptance in the completion report.
+- Review shared-alphabet defaults and complex rich-text behavior after use.
 - Licensing, updates, and advanced compatibility decisions can wait.
-- Prototype implementation still requires an explicit request; planning continues for now.
-
-1. Resolve key and conversion semantics.
-2. Agree on initial compatibility targets.
-3. When implementation is authorized, use the installed Build Tools to set up project builds and GitHub Actions.
-4. Agree on UI, packaging, licensing, and acceptance criteria.
