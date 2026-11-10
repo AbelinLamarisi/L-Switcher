@@ -34,7 +34,9 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Each exclusion can match by executable name or full executable path, selected in the UI.
 - Exclusions apply only while the matching application's window is active. When focus moves to a non-excluded application, hotkeys resume unless manually paused.
 - If a configured layout is removed from Windows, retain its binding, show `Layout unavailable`, and disable that action while the layout is unavailable.
-- Run a single application instance. Launching the executable again opens settings in the existing instance.
+- Run a single application instance. If a newly launched executable is newer than the running version, request a graceful shutdown of the older instance, wait for it to release resources and the single-instance lock, then start the new version. Do not run both versions concurrently.
+- For an equal or older incoming version, retain the existing instance and open its settings; do not downgrade the running application.
+- If the older instance cannot exit, report the failure instead of starting a second instance or forcibly terminating it. Compare explicit application versions, not file timestamps. Implementing this replacement behavior remains pending.
 - Use one global configured conversion pair. Direction is selected in settings: `Swap both ways`, `First → Second`, or `Second → First`, independently of the currently active layout. Bidirectional mode swaps mixed text within the pair.
 - Leave the active layout unchanged after conversion.
 - Preserve case, spaces, and line breaks. Convert punctuation according to physical key positions. Leave characters outside the configured pair unchanged.
