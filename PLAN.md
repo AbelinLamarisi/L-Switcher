@@ -4,6 +4,7 @@
 
 Implementation authorized by the user on 2026-11-10. Follow the accepted decisions below.
 Maintain this plan in English. Proposals are not accepted decisions until agreed.
+Update this plan whenever the user makes a decision; promptly record accepted decisions and revise superseded proposals or open questions. This is the user's standing preference for all projects that use a plan.
 
 ## Accepted decisions
 
