@@ -22,6 +22,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Support ordinary key combinations such as Ctrl+Alt+R.
 - First launch has no key assignments; the user configures all bindings.
 - Include a tray command to pause hotkeys.
+- Include a user-assignable Pause/Resume hotkey in the prototype. It remains active during manual pause so it can resume processing, but is disabled along with all other L-Switcher hotkeys in excluded applications.
 - Hotkeys remain paused until manually resumed or the application restarts. Restarting resumes hotkeys.
 - Short-tap time limit defaults to 300 ms and is configurable in settings.
 - Store settings as JSON in `%LOCALAPPDATA%\L-Switcher\settings.json`, with a schema version, safe replacement on save, and a backup of the previous valid configuration.
@@ -77,7 +78,6 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Deferred by the user: explicit clipboard-text conversion, separate from selection conversion; this command intentionally changes clipboard contents. Not part of the prototype.
 - Transliteration as a separate command from keyboard-layout conversion.
 - Optional brief on-screen layout indicator after a manual switch.
-- User-configurable shortcut to pause/resume hotkeys.
 - Settings import/export and a shortcut test area showing detected keys and matched actions.
 - Later candidates: manually invoked text snippets and a separate convert-previous-word command. The latter would need a new scope decision; the existing selection command must still do nothing without a selection.
 - Do not add these features until approved. Automatic switching remains out of scope.
@@ -121,6 +121,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Implemented the .NET Framework 4.8 x64 project, settings UI, tray, single-instance activation, keyboard/mouse hooks, direct layout activation, exclusions, startup control, and JSON recovery/backup.
 - Implemented physical-key conversion, word-context punctuation, native Word character edits, and a guarded clipboard/UI Automation path with RTF/plain-text support.
 - Added dependency-free automated tests, a build script, UI/Word smoke tests, and GitHub Actions build/artifact configuration.
+- Verified native Word conversion with bold/italic/color, paragraphs, selection retention, unchanged active layout, and protected/empty selections. Verified the clipboard/UIA path on a temporary editable RichTextBox, including RTF formatting, selection retention, read-only behavior, and restoration of text/custom clipboard formats. These checks do not replace application-specific acceptance in VS Code and Chrome.
 - Verify the prototype in VS Code, Chrome, and Word; distinguish automated checks from manual compatibility acceptance in the completion report.
 - Review shared-alphabet defaults and complex rich-text behavior after use.
 - Licensing, updates, and advanced compatibility decisions can wait.
