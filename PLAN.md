@@ -16,6 +16,11 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - No automatic language detection or automatic switching while typing.
 - Allow direct activation of any installed keyboard layout through assigned keys, rather than cycling through layouts.
 - Support standalone modifier keys, distinguish left/right keys, and support media keys as assignment targets. Example mappings (not fixed defaults): Left Ctrl → Russian, Left Shift → English, a media key → German.
+- Standalone Ctrl/Shift actions trigger on release after a short tap only, provided the key did not participate in a keyboard shortcut or mouse action. Long holds do not trigger the action.
+- Assigned media keys suppress their original function.
+- Support ordinary key combinations such as Ctrl+Alt+R.
+- First launch has no key assignments; the user configures all bindings.
+- Include a tray command to pause hotkeys.
 - Aim for compatibility with most Windows applications. Games are out of scope for now.
 - Convert selected text between a configured pair of layouts; swap mixed text in both directions within that pair.
 - Keep the converted text selected.
@@ -27,8 +32,8 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ## Proposals awaiting agreement
 
-- Standalone modifiers trigger on release only if no other key or mouse operation participated in the gesture.
 - First release focuses on layout activation, selection conversion, and settings.
+- Store settings as JSON in `%LOCALAPPDATA%\L-Switcher\settings.json`. Use a schema version, safe replacement on save, and a last-known-good backup. Storage choice is not yet approved.
 
 ## Technology decision rationale
 
@@ -44,11 +49,8 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ### Key handling
 
-- Confirm release-based activation and cancellation when a modifier participates in keyboard shortcuts or mouse actions.
-- Should a long standalone hold activate the action, or only a short tap?
-- Should assigned media keys suppress their original action?
-- Support ordinary key combinations alongside single keys?
-- Defaults versus requiring explicit user configuration?
+- Choose the short-tap time limit and whether it is configurable (proposal: 300 ms).
+- Decide whether paused state persists across restarts.
 
 ### Selection conversion
 
@@ -65,7 +67,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 - Which applications are the initial acceptance targets?
 - Are elevated applications, terminals, and Remote Desktop required?
-- Are per-application exclusions and a temporary pause needed?
+- Are per-application exclusions needed?
 
 ### UI and distribution
 
@@ -81,8 +83,8 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ### Minimum decisions before the prototype
 
-- Confirm standalone-key activation semantics (release, shortcut/mouse cancellation, long holds) and suppression of assigned media-key actions.
-- Choose initial layout bindings, conversion shortcut, and conversion pair(s).
+- Choose the short-tap time limit.
+- Choose conversion pair configuration; all key bindings are user-defined with no initial assignments.
 - Confirm whether conversion changes the active layout.
 - Agree on temporary clipboard use and plain-text conversion scope.
 - Name initial application acceptance targets and decide whether elevated apps and RDP can be deferred.
