@@ -79,7 +79,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Deferred by the user: explicit clipboard-text conversion, separate from selection conversion; this command intentionally changes clipboard contents. Not part of the prototype.
 - Transliteration as a separate command from keyboard-layout conversion.
 - Optional brief on-screen layout indicator after a manual switch.
-- Settings import/export.
+- Deferred by the user: settings import/export through a JSON file. Not part of the prototype.
 - Later candidates: manually invoked text snippets and a separate convert-previous-word command. The latter would need a new scope decision; the existing selection command must still do nothing without a selection.
 - Do not add these features until approved. Automatic switching remains out of scope.
 - Research: [official Punto Switcher page](https://yandex.ru/soft/punto/win/); [third-party hotkey overview](https://puntos.ru/news/4-punto-switcher-gorjachie-klavishi-po-umolchaniju.html). The official detailed help was inaccessible during this review; third-party descriptions are not verification of the latest installed version.
