@@ -66,6 +66,13 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Do not promise exact memory or binary size without a prototype.
 - Sources: [.NET Framework on Windows](https://learn.microsoft.com/en-us/dotnet/framework/install/on-windows-10), [WinForms tray component](https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/notifyicon-component-windows-forms).
 
+## Accepted development tooling decisions
+
+- Use minimal Visual Studio Build Tools rather than installing the full Visual Studio IDE. Select the components needed to build C# WinForms targeting .NET Framework 4.8 when implementation begins.
+- Third-party open-source libraries are allowed, but ask the user before adding each library. Prefer popular, actively maintained libraries; this preference does not replace individual approval.
+- Set up GitHub Actions automated builds from the start of implementation, rather than deferring CI until later.
+- These decisions do not authorize starting implementation or installing tools yet; the planning-only agreement remains in effect.
+
 ## Open questions
 
 ### Selection conversion
@@ -99,5 +106,5 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 1. Resolve key and conversion semantics.
 2. Agree on initial compatibility targets.
-3. Choose the development tool installation and build workflow for .NET Framework 4.8.
+3. When implementation is authorized, install the required minimal Build Tools components and set up local builds and GitHub Actions.
 4. Agree on UI, packaging, licensing, and acceptance criteria.
