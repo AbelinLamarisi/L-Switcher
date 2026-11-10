@@ -22,17 +22,24 @@ namespace LSwitcher
         }
         private static void Check(bool value, string message) { assertions++; if (!value) throw new Exception(message); }
         private static void Equal<T>(T expected, T actual, string message) { Check(Equals(expected, actual), message + ": expected " + expected + ", got " + actual); }
+        private static void Run(Action test)
+        {
+            Console.WriteLine("RUN: " + test.Method.Name);
+            test();
+            Console.WriteLine("PASS: " + test.Method.Name);
+        }
         [STAThread] private static int Main(string[] args)
         {
             try
             {
+                Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
                 Application.EnableVisualStyles();
-                TestTaps(); TestValidation(); TestStorage(); TestConversion(); TestCase(); TestRichText(); TestLayouts(); TestPauseAndCapture(); TestColors();
+                Run(TestTaps); Run(TestValidation); Run(TestStorage); Run(TestConversion); Run(TestCase); Run(TestRichText); Run(TestLayouts); Run(TestPauseAndCapture); Run(TestColors);
                 // Run COM checks before Application.Run tears down a WinForms synchronization context.
-                if (args.Contains("--word-smoke")) TestWord();
-                if (args.Contains("--clipboard-smoke")) TestClipboard();
-                if (args.Contains("--ui-smoke")) { TestSettingsWindow(); TestTrayLifecycle(); }
-                if (args.Contains("--dpi-smoke")) TestDpi();
+                if (args.Contains("--word-smoke")) Run(TestWord);
+                if (args.Contains("--clipboard-smoke")) Run(TestClipboard);
+                if (args.Contains("--ui-smoke")) { Run(TestSettingsWindow); Run(TestTrayLifecycle); }
+                if (args.Contains("--dpi-smoke")) Run(TestDpi);
                 Console.WriteLine("PASS: " + assertions + " assertions"); return 0;
             }
             catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
