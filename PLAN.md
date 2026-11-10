@@ -21,25 +21,25 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - With no selection, the conversion command does nothing.
 - Distribution must not require users to install dependencies: a standalone executable.
 - Installing the development toolchain on this machine should be straightforward.
-- Technology stack: C# + Windows Forms, with Windows API interop where needed.
-- Do not bundle the .NET runtime. Target runtime family/version remains to be decided: modern .NET requires an installed Desktop Runtime; .NET Framework is included with Windows.
+- Technology stack: C# + Windows Forms targeting .NET Framework 4.8, with Windows API interop where needed.
+- Do not bundle the runtime. Use the Windows-provided .NET Framework on Windows 11 and later; no separate modern .NET Desktop Runtime prerequisite.
 
 ## Proposals awaiting agreement
 
 - Standalone modifiers trigger on release only if no other key or mouse operation participated in the gesture.
 - First release focuses on layout activation, selection conversion, and settings.
 
+## Technology decision rationale
+
+- C# and WinForms simplify the small settings UI and tray integration.
+- .NET Framework 4.8 satisfies the requirement to use the runtime provided with Windows, without bundling a modern .NET runtime or requiring its installation.
+- Accept the older platform and its library ecosystem for this Windows-only utility.
+- C++/Win32, Rust/Win32, and self-contained modern .NET were considered but not selected.
+- Local check: `dotnet` is available, but `dotnet --list-sdks` returned no SDKs. Choose and verify the build tools and .NET Framework 4.8 targeting/reference assemblies before implementation. No tools have been installed for this project yet.
+- Do not promise exact memory or binary size without a prototype.
+- Sources: [.NET Framework on Windows](https://learn.microsoft.com/en-us/dotnet/framework/install/on-windows-10), [WinForms tray component](https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/notifyicon-component-windows-forms).
+
 ## Open questions
-
-### Technology evaluation (historical alternatives; C# + WinForms selected)
-
-- Earlier proposal: self-contained C# deployment. Superseded by the decision not to bundle the runtime.
-- Alternative for a compact native utility: C++ with Win32 and statically linked CRT. More manual UI and resource-management code; requires C++ Build Tools and Windows SDK.
-- Rust with Win32 remains possible, but adds Rust tooling alongside the MSVC build prerequisites and does not simplify this small Windows-only UI enough to be the preferred choice.
-- Local check: `dotnet` is available, but `dotnet --list-sdks` returned no SDKs. Development SDK installation is still needed for the C# option.
-- Decide whether smaller executable/resource usage or simpler development takes priority. Do not promise exact memory or binary size without a prototype.
-- Runtime decision pending: preserve zero prerequisite installation by targeting Windows-provided .NET Framework, or permit a separate Desktop Runtime prerequisite for modern .NET. Local Desktop Runtimes include 8.0.8 and 9.0.22, but their presence is not guaranteed on other Windows machines.
-- Sources: [single-file deployment](https://learn.microsoft.com/en-us/dotnet/core/deploying/single-file), [WinForms tray component](https://learn.microsoft.com/en-us/dotnet/desktop/winforms/controls/notifyicon-component-windows-forms), [static CRT](https://learn.microsoft.com/en-us/cpp/build/reference/md-mt-ld-use-run-time-library), [Rust installation](https://rust-lang.org/tools/install/).
 
 ### Key handling
 
@@ -80,5 +80,5 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 1. Resolve key and conversion semantics.
 2. Agree on initial compatibility targets.
-3. Compare technology choices against the accepted requirements, verifying relevant platform constraints.
+3. Choose the development tool installation and build workflow for .NET Framework 4.8.
 4. Agree on UI, packaging, licensing, and acceptance criteria.
