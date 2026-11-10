@@ -48,6 +48,8 @@ namespace LSwitcher
                     try
                     {
                         var tabs = form.Controls.OfType<TabControl>().Single();
+                        ChangeDpi(form, form.LayoutDpi);
+                        CheckButtons(form, form.LayoutDpi);
                         form.Location = new Point(Screen.FromControl(form).WorkingArea.Left + 10, Screen.FromControl(form).WorkingArea.Top + 10);
                         foreach (int dpi in new[] { 96, 120, 144, 192, 240, 288, 192, 96 })
                         {

@@ -80,8 +80,14 @@ namespace LSwitcher
             {
                 float ratio = (float)dpi / currentDpi;
                 var client = new Size((int)Math.Round(ClientSize.Width * ratio), (int)Math.Round(ClientSize.Height * ratio));
+                // WinForms ignores an equal Font assignment. Replacing and disposing
+                // it at the same DPI would leave controls using the disposed font.
+                if (dpi != currentDpi)
+                {
+                    Font replacement = CreateFont(dpi), previous = dpiFont;
+                    dpiFont = replacement; Font = replacement; previous.Dispose();
+                }
                 currentDpi = dpi;
-                Font replacement = CreateFont(dpi), previous = dpiFont; dpiFont = replacement; Font = replacement; previous.Dispose();
                 foreach (Control child in Controls) ScaleTree(child);
                 var area = Screen.FromRectangle(suggested ?? Bounds).WorkingArea;
                 MinimumSize = new Size(Math.Min(Px(logicalMinimum.Width), area.Width), Math.Min(Px(logicalMinimum.Height), area.Height));
