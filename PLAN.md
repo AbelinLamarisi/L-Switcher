@@ -108,7 +108,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 
 ### Selection conversion
 
-- For words whose letters occur in both layouts, the prototype inherits the preceding direction, initially First → Second. This is an implementation default pending usage feedback.
+- User deferred the final shared-alphabet ambiguity rule until practical testing. For now, words whose letters occur in both layouts inherit the preceding direction, initially First → Second; this remains a provisional implementation default, not the final accepted rule.
 - Broader rich-text and complex-document acceptance beyond the agreed Word cases remains open; plain-text fallback is allowed.
 
 ### UI and distribution
