@@ -107,6 +107,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Use minimal Visual Studio Build Tools rather than installing the full Visual Studio IDE. Select the components needed to build C# WinForms targeting .NET Framework 4.8 when implementation begins.
 - Third-party open-source libraries are allowed, but ask the user before adding each library. Prefer popular, actively maintained libraries; this preference does not replace individual approval.
 - Set up GitHub Actions automated builds from the start of implementation, rather than deferring CI until later.
+- Optimize GitHub Actions usage for the user's GitHub Free plan: one Windows job with all core/UI/DPI checks, automatic runs for relevant main/PR changes and version tags, manual dispatch, cancellation of superseded runs, short timeouts, and short artifact retention. Skip documentation-only branch/PR changes and duplicate feature-branch push runs; retain tested executables for main/tag/manual builds rather than every PR.
 - Tool installation was explicitly authorized and completed on 2026-11-10. Application implementation was subsequently authorized on the same day.
 
 ## Open questions
@@ -132,7 +133,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Implemented the subsequently approved Pause/Resume shortcut (including resuming during manual pause and exclusion passthrough), selection uppercase/lowercase/invert-case shortcuts, and a non-executing shortcut test field with tap/hold timing and draft assignment feedback. Existing schema-one settings default these new shortcuts to unassigned.
 - Implemented independent per-layout tray-label colors, with a color picker, preview, default reset, persistence, and retention for unavailable layouts.
 - Implemented per-monitor DPI handling in the executable manifest and a shared DPI-aware form base, with stable 96-DPI layout metrics, font/spacing rescaling, content-sized buttons/rows, dynamic binding scaling, and monitor work-area limits. No sidecar configuration is required. DPI/UI follow-up passed 836 assertions across 100–300% and repeated DPI messages, including the exclusion dialog; physical mixed-DPI monitor movement remains a manual check.
-- Release x64 build and the full combined test run passed with 99 assertions on 2026-11-10. VS Code and Chrome manual acceptance and a hosted GitHub Actions run remain pending.
+- Release x64 build and the full local combined test run passed with 99 assertions on 2026-11-10. Hosted Windows build and core/UI/DPI checks subsequently passed 844 assertions in run 42817694355, producing executable and diagnostic artifacts. VS Code and Chrome manual acceptance remains pending.
 - Verified native Word conversion with bold/italic/color, paragraphs, selection retention, unchanged active layout, and protected/empty selections. Verified the clipboard/UIA path on a temporary editable RichTextBox, including RTF formatting, selection retention, read-only behavior, and restoration of text/custom clipboard formats. These checks do not replace application-specific acceptance in VS Code and Chrome.
 - Verify the prototype in VS Code, Chrome, and Word; distinguish automated checks from manual compatibility acceptance in the completion report.
 - Review shared-alphabet defaults and complex rich-text behavior after use.

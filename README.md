@@ -15,12 +15,14 @@ The release executable is standalone; copy `L-Switcher.exe` to a permanent folde
 
 ## GitHub Actions
 
-The [Windows build and tests workflow](https://github.com/AbelinLamarisi/L-Switcher/actions/workflows/build.yml) runs on every push, pull request, and manual dispatch. It builds Release x64 on Windows Server 2022 using `build.ps1`, then runs the core tests and UI/DPI smoke checks. A failed build or assertion fails the job; the job has a 15-minute timeout.
+The [Windows build and tests workflow](https://github.com/AbelinLamarisi/L-Switcher/actions/workflows/build.yml) runs on pushes to `main`, `v*` tags, pull requests, and manual dispatch. Documentation-only changes (Markdown, `docs/`, license files, or `.gitignore`) skip automatic branch/PR runs. Feature-branch pushes are checked through their PR, avoiding duplicate push/PR builds. Version tags always run.
+
+One Windows Server 2022 job builds Release x64 and the test executable with MSBuild, then runs all core and UI/DPI checks once. A failed build or assertion fails the job. The job has a 6-minute timeout; tests have a 2-minute timeout. Superseded runs for the same branch/PR are canceled. Tests require Windows APIs, so they remain together on Windows without extra jobs or a platform matrix.
 
 Download artifacts from a workflow run's summary:
 
-- `L-Switcher-win-x64`: the tested standalone `L-Switcher.exe`, retained for 30 days and uploaded only after all checks pass.
-- `L-Switcher-test-results`: build/test output and UI/DPI PNG previews, retained for 14 days and uploaded even when checks fail.
+- `L-Switcher-win-x64`: the tested standalone `L-Switcher.exe`, retained for 7 days and uploaded after all checks pass on main/tag/manual runs. PR runs validate the build without retaining another executable.
+- `L-Switcher-test-results`: build/test output and UI/DPI PNG previews, retained for 3 days and uploaded even when checks fail.
 
 Artifacts require access to this private repository. Word and clipboard integration checks remain local because they require Word or foreground desktop/clipboard access. This workflow does not create GitHub Releases or an installer.
 
@@ -60,7 +62,7 @@ Word formatting acceptance cases: mixed English/Russian text, bold, italic, colo
 
 The Word smoke test requires Microsoft Word and desktop/COM access. It uses its own new Word instance and does not modify existing documents. UI smoke output is placed in `tests/bin/Release/settings-*.png`.
 
-Verified on the development machine on 2026-11-10: Release x64 build and 99 assertions in the combined `--word-smoke --clipboard-smoke --ui-smoke` run. Checks cover all four settings tabs and tray lifecycle, native Word formatting/selection, clipboard/UIA conversion, case conversion, pause/resume semantics, shortcut capture, per-layout colors, exclusion matching, settings migration, recovery, and assignment conflicts. All tabs were visually inspected. GitHub Actions is configured; its hosted run has not been executed from this local implementation session. Manual VS Code and Chrome acceptance remains pending.
+Verified on the development machine on 2026-11-10: Release x64 build and 99 assertions in the combined `--word-smoke --clipboard-smoke --ui-smoke` run. Checks cover all four settings tabs and tray lifecycle, native Word formatting/selection, clipboard/UIA conversion, case conversion, pause/resume semantics, shortcut capture, per-layout colors, exclusion matching, settings migration, recovery, and assignment conflicts. All tabs were visually inspected. Hosted GitHub Actions run 42817694355 subsequently passed the Release x64 build and 844 core/UI/DPI assertions, with executable and diagnostic artifacts. Manual VS Code and Chrome acceptance remains pending.
 
 DPI follow-up on 2026-11-10: Release rebuild and 836 assertions passed with `--ui-smoke --dpi-smoke`. Rendered and inspected layouts at 100–300%, tested repeated `WM_DPICHANGED` transitions, dynamically added bindings, and the actual exclusion dialog. The process manifest was verified as PerMonitorV2. These transitions are simulated with window messages; moving between physical monitors with different scale factors has not been separately exercised. To load a rebuilt executable, exit the running instance through the tray before launching it again.
 
