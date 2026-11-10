@@ -12,7 +12,8 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Keep the GitHub repository private for now. Future open-source distribution remains planned.
 - Target Windows 11 and later; ARM support is out of scope.
 - Minimal UI: system tray icon(s) and a settings window.
-- Support startup with Windows, controlled by a checkbox in settings. The default checkbox state is not yet decided.
+- Support startup with Windows, controlled by a checkbox in settings; disabled by default.
+- Settings UI is English. The tray icon displays a two-letter abbreviation of the active layout.
 - No automatic language detection or automatic switching while typing.
 - Allow direct activation of any installed keyboard layout through assigned keys, rather than cycling through layouts.
 - Support standalone modifier keys, distinguish left/right keys, and support media keys as assignment targets. Example mappings (not fixed defaults): Left Ctrl → Russian, Left Shift → English, a media key → German.
@@ -21,10 +22,15 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Support ordinary key combinations such as Ctrl+Alt+R.
 - First launch has no key assignments; the user configures all bindings.
 - Include a tray command to pause hotkeys.
+- Hotkeys remain paused until manually resumed or the application restarts. Restarting resumes hotkeys.
 - Short-tap time limit defaults to 300 ms and is configurable in settings.
 - Store settings as JSON in `%LOCALAPPDATA%\L-Switcher\settings.json`, with a schema version, safe replacement on save, and a backup of the previous valid configuration.
 - Aim for compatibility with most Windows applications. Games are out of scope for now.
-- Convert selected text between a configured pair of layouts; swap mixed text in both directions within that pair.
+- Use one global configured conversion pair; swap mixed text in both directions within that pair.
+- Conversion direction for overlapping alphabets is determined by settings, not by the currently active layout. The exact direction-setting UI and semantics still need clarification.
+- Leave the active layout unchanged after conversion.
+- Temporary clipboard use with restoration of its contents is allowed if that implementation approach is selected.
+- Preserve internal text formatting during conversion, including in the prototype. Plain-text replacement that loses formatting is not acceptable.
 - Keep the converted text selected.
 - With no selection, the conversion command does nothing.
 - Distribution must not require users to install dependencies: a standalone executable.
@@ -48,19 +54,11 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ## Open questions
 
-### Key handling
-
-- Decide whether paused state persists across restarts.
-
 ### Selection conversion
 
-- One global layout pair, or multiple pairs with separate shortcuts?
-- What is the conversion shortcut?
-- After conversion, should the active layout change? How should mixed text affect that decision?
-- For overlapping alphabets (e.g. English/German), how is conversion direction determined?
+- Define how settings specify conversion direction for overlapping alphabets; an unordered pair alone does not resolve characters shared by both layouts.
 - Preserve case, line breaks, and characters outside the selected pair? How should punctuation and ambiguous mappings behave?
-- Is temporary clipboard use acceptable? What preservation guarantees are required?
-- Is plain-text replacement acceptable in rich-text editors?
+- Define supported rich-text formats/applications and behavior when formatting-preserving conversion is unavailable.
 - Is conversion of read-only selections required, and where should the result go?
 
 ### Compatibility
@@ -71,9 +69,8 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ### UI and distribution
 
-- Static tray icon or active-layout indicator?
-- Settings UI language: Russian, English, or both?
-- Should startup with Windows be enabled by default?
+- Settings window organization, hotkey capture UX, save/cancel behavior, and first-run behavior?
+- Tray click actions, context menu, paused indication, and labels for multiple layouts of the same language?
 - Manual releases or update checking?
 - Open-source license?
 - Resource usage and executable size preferences?
@@ -82,11 +79,10 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ### Minimum decisions before the prototype
 
-- Choose conversion pair configuration; all key bindings are user-defined with no initial assignments.
-- Confirm whether conversion changes the active layout.
-- Agree on temporary clipboard use and plain-text conversion scope.
+- Resolve direction-setting semantics for overlapping alphabets; all key bindings are user-defined with no initial assignments.
+- Agree on formatting-preservation acceptance cases and unsupported-editor behavior.
 - Name initial application acceptance targets and decide whether elevated apps and RDP can be deferred.
-- Confirm startup default. Other UI, licensing, update, and advanced compatibility decisions can wait.
+- Agree on the minimal settings and tray UI. Licensing, updates, and advanced compatibility decisions can wait.
 - Prototype implementation still requires an explicit request; planning continues for now.
 
 1. Resolve key and conversion semantics.
