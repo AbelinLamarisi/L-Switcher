@@ -114,7 +114,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 
 ### UI and distribution
 
-- Decide manual versus scheduled update check timing for the future public-source feature; actual source hosting can be chosen when enabling it.
+- Future update-check UI is agreed: `Check for updates` plus `Automatically check for updates`, disabled by default. When enabled, check on startup if due and subsequently no more than once per day. Background checks notify only when a new version is available; no-update results and temporary source failures remain silent. Manual checks always report their result. Installation remains manual. Activation still waits for a public metadata source; choose hosting then.
 - Open-source license?
 - Resource usage and executable size preferences?
 
@@ -131,4 +131,4 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Verified native Word conversion with bold/italic/color, paragraphs, selection retention, unchanged active layout, and protected/empty selections. Verified the clipboard/UIA path on a temporary editable RichTextBox, including RTF formatting, selection retention, read-only behavior, and restoration of text/custom clipboard formats. These checks do not replace application-specific acceptance in VS Code and Chrome.
 - Verify the prototype in VS Code, Chrome, and Word; distinguish automated checks from manual compatibility acceptance in the completion report.
 - Review shared-alphabet defaults and complex rich-text behavior after use.
-- Update checking activation is deferred until a public metadata source exists. Decide future check timing; licensing and advanced compatibility decisions can wait.
+- Update checking activation is deferred until a public metadata source exists; its future check timing and UI are agreed. Licensing and advanced compatibility decisions can wait.
