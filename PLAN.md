@@ -47,7 +47,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Installing the development toolchain on this machine should be straightforward.
 - Technology stack: C# + Windows Forms targeting .NET Framework 4.8, with Windows API interop where needed.
 - Do not bundle the runtime. Use the Windows-provided .NET Framework on Windows 11 and later; no separate modern .NET Desktop Runtime prerequisite.
-- Include new-version checking in the prototype. Notify the user when an update is available; downloading and replacing the executable remain manual. Update metadata hosting/access and check timing still need decisions. Do not embed GitHub credentials in the executable.
+- Plan new-version checking, but defer enabling it until a public update metadata source is available. Until then, update test builds manually. Once enabled, notify the user when an update is available; downloading and replacing the executable remain manual. Do not add private-source authentication or embed GitHub credentials in the executable. No public update source has been authorized for creation yet.
 - In bidirectional conversion, convert mixed selections word by word. Resolve ambiguous punctuation from the preceding word's source layout (user clarification on 2026-11-10).
 - Word formatting acceptance starts with bold, italic, color, and multiple paragraphs (accepted on 2026-11-10).
 
@@ -114,7 +114,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 
 ### UI and distribution
 
-- Choose an update metadata source/access model while the source repository is private, and decide manual versus scheduled check timing.
+- Decide manual versus scheduled update check timing for the future public-source feature; actual source hosting can be chosen when enabling it.
 - Open-source license?
 - Resource usage and executable size preferences?
 
@@ -131,4 +131,4 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Verified native Word conversion with bold/italic/color, paragraphs, selection retention, unchanged active layout, and protected/empty selections. Verified the clipboard/UIA path on a temporary editable RichTextBox, including RTF formatting, selection retention, read-only behavior, and restoration of text/custom clipboard formats. These checks do not replace application-specific acceptance in VS Code and Chrome.
 - Verify the prototype in VS Code, Chrome, and Word; distinguish automated checks from manual compatibility acceptance in the completion report.
 - Review shared-alphabet defaults and complex rich-text behavior after use.
-- Resolve update metadata access and check timing; licensing and advanced compatibility decisions can wait.
+- Update checking activation is deferred until a public metadata source exists. Decide future check timing; licensing and advanced compatibility decisions can wait.
