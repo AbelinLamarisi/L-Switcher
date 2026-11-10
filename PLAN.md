@@ -14,7 +14,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Minimal UI: system tray icon(s) and a settings window.
 - Support startup with Windows, controlled by a checkbox in settings; disabled by default.
 - Settings UI is English. The tray icon displays a two-letter abbreviation of the active layout.
-- Allow users to choose the color of the tray layout label in settings.
+- Allow users to choose a separate tray-label color for each keyboard layout in settings.
 - No automatic language detection or automatic switching while typing.
 - Allow direct activation of any installed keyboard layout through assigned keys, rather than cycling through layouts.
 - Support standalone modifier keys, distinguish left/right keys, and support media keys as assignment targets. Example mappings (not fixed defaults): Left Ctrl → Russian, Left Shift → English, a media key → German.
