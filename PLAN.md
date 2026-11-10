@@ -40,6 +40,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Keep the converted text selected.
 - With no selection, the conversion command does nothing.
 - Do nothing for read-only selections.
+- Include selection case conversion in the prototype: uppercase, lowercase, and invert case, each with a user-assignable hotkey. Approved during the interactive feature review.
 - Distribution must not require users to install dependencies: a standalone executable.
 - Installing the development toolchain on this machine should be straightforward.
 - Technology stack: C# + Windows Forms targeting .NET Framework 4.8, with Windows API interop where needed.
@@ -73,7 +74,6 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 Inspired by Punto Switcher feature descriptions and the current L-Switcher scope:
 
-- Selection case commands: uppercase, lowercase, and invert case.
 - Explicit clipboard-text conversion, separate from selection conversion; this command intentionally changes clipboard contents.
 - Transliteration as a separate command from keyboard-layout conversion.
 - Optional brief on-screen layout indicator after a manual switch.
