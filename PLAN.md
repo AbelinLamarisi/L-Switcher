@@ -74,7 +74,7 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 Inspired by Punto Switcher feature descriptions and the current L-Switcher scope:
 
-- Explicit clipboard-text conversion, separate from selection conversion; this command intentionally changes clipboard contents.
+- Deferred by the user: explicit clipboard-text conversion, separate from selection conversion; this command intentionally changes clipboard contents. Not part of the prototype.
 - Transliteration as a separate command from keyboard-layout conversion.
 - Optional brief on-screen layout indicator after a manual switch.
 - User-configurable shortcut to pause/resume hotkeys.
