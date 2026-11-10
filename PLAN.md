@@ -26,11 +26,10 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 - Short-tap time limit defaults to 300 ms and is configurable in settings.
 - Store settings as JSON in `%LOCALAPPDATA%\L-Switcher\settings.json`, with a schema version, safe replacement on save, and a backup of the previous valid configuration.
 - Aim for compatibility with most Windows applications. Games are out of scope for now.
-- Use one global configured conversion pair; swap mixed text in both directions within that pair.
-- Conversion direction for overlapping alphabets is determined by settings, not by the currently active layout. The exact direction-setting UI and semantics still need clarification.
+- Use one global configured conversion pair. Direction is selected in settings: `Swap both ways`, `First → Second`, or `Second → First`, independently of the currently active layout. Bidirectional mode swaps mixed text within the pair.
 - Leave the active layout unchanged after conversion.
 - Temporary clipboard use with restoration of its contents is allowed if that implementation approach is selected.
-- Preserve internal text formatting during conversion, including in the prototype. Plain-text replacement that loses formatting is not acceptable.
+- Preserve internal text formatting where possible, including in the prototype. If formatting cannot be preserved, still convert using plain text with formatting loss. This supersedes the earlier prohibition on plain-text fallback.
 - Keep the converted text selected.
 - With no selection, the conversion command does nothing.
 - Distribution must not require users to install dependencies: a standalone executable.
@@ -41,6 +40,21 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 ## Proposals awaiting agreement
 
 - First release focuses on layout activation, selection conversion, and settings.
+
+## Accepted settings and tray UI
+
+- Use tabs: `Layouts`, `Conversion`, and `General`.
+- Users add layout-binding rows with an `Add` button; do not prepopulate bindings.
+- Capture a shortcut by focusing its field and pressing the desired key or combination. Provide a `Clear` button.
+- Conflicting assignments block saving and show an explanation.
+- Use `OK`, `Cancel`, and `Apply` buttons.
+- Automatically open settings on first launch. Subsequent launches start in the tray.
+- A single left click on the tray icon opens settings. Right click opens `Settings…`, `Pause hotkeys` / `Resume hotkeys`, and `Exit`.
+- While paused, retain the two-letter active-layout label and add a small pause mark.
+- The tray tooltip shows the full layout name and pause status, e.g. `English (United States) — Hotkeys paused`.
+- Layouts of the same language share their two-letter label (e.g. `EN`); the tooltip distinguishes their full names.
+- The `Conversion` tab contains two layout selectors, a shortcut field, and the `Direction` selector described above.
+- Use standard Windows system styling for the prototype; no custom theme requirement.
 
 ## Technology decision rationale
 
@@ -56,9 +70,9 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ### Selection conversion
 
-- Define how settings specify conversion direction for overlapping alphabets; an unordered pair alone does not resolve characters shared by both layouts.
+- Define ambiguous shared-character behavior if `Swap both ways` is selected for overlapping alphabets. Explicit one-way modes are already agreed.
 - Preserve case, line breaks, and characters outside the selected pair? How should punctuation and ambiguous mappings behave?
-- Define supported rich-text formats/applications and behavior when formatting-preserving conversion is unavailable.
+- Define supported rich-text formats/applications for formatting-preservation acceptance checks; plain-text fallback is allowed.
 - Is conversion of read-only selections required, and where should the result go?
 
 ### Compatibility
@@ -69,8 +83,6 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 
 ### UI and distribution
 
-- Settings window organization, hotkey capture UX, save/cancel behavior, and first-run behavior?
-- Tray click actions, context menu, paused indication, and labels for multiple layouts of the same language?
 - Manual releases or update checking?
 - Open-source license?
 - Resource usage and executable size preferences?
@@ -80,9 +92,9 @@ Maintain this plan in English. Proposals are not accepted decisions until agreed
 ### Minimum decisions before the prototype
 
 - Resolve direction-setting semantics for overlapping alphabets; all key bindings are user-defined with no initial assignments.
-- Agree on formatting-preservation acceptance cases and unsupported-editor behavior.
+- Agree on formatting-preservation acceptance cases.
 - Name initial application acceptance targets and decide whether elevated apps and RDP can be deferred.
-- Agree on the minimal settings and tray UI. Licensing, updates, and advanced compatibility decisions can wait.
+- Licensing, updates, and advanced compatibility decisions can wait.
 - Prototype implementation still requires an explicit request; planning continues for now.
 
 1. Resolve key and conversion semantics.
