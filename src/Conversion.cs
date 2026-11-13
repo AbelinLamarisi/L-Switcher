@@ -13,6 +13,7 @@ namespace LSwitcher
     internal sealed class SelectionConversion
     {
         private bool busy;
+        internal bool IsBusy { get { return busy; } }
         internal event Action<string> Notice;
         internal void Run(IntPtr target, Settings settings) { Run(target, settings, null); }
         internal void RunCase(IntPtr target, CaseMode mode) { Run(target, null, mode); }

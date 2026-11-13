@@ -38,7 +38,7 @@ Artifacts require access to this private repository. Word and clipboard integrat
 - The **General** shortcut test field displays the detected key/combination, tap or hold duration, and the action assigned in the current settings draft. It never executes the action.
 - Settings and the exclusion editor support per-monitor DPI changes. Buttons and rows size to their contents; large windows fit the monitor work area and tab contents can scroll. DPI handling is embedded in the executable; no extra `.exe.config` is required.
 - **Apply** saves; **OK** saves and closes; **Cancel** or the close button discards unapplied changes. The application remains in the tray.
-- Click the tray label for settings; right-click for pause/resume or exit. Pause resets on restart. Launching the executable again opens the existing instance's settings.
+- Click the tray label for settings; right-click for pause/resume or exit. Pause resets on restart. Every new launch gracefully replaces the running instance, regardless of version: wait for its conversions/clipboard restoration and resource cleanup, then start the launched executable. Saved settings are retained; unapplied edits are discarded. If shutdown fails within 10 seconds, the new launch reports an error without starting a second instance or terminating the running process.
 
 Settings are stored in `%LOCALAPPDATA%\L-Switcher\settings.json`, with atomic replacement and a `.bak` backup of the previous valid configuration. Corrupt configuration triggers recovery with a warning. Removed layouts retain their bindings and appear as `Layout unavailable`; unavailable actions are disabled.
 
@@ -53,7 +53,7 @@ Word formatting acceptance cases: mixed English/Russian text, bold, italic, colo
 ## Validation
 
 ```powershell
-.\build.ps1 -Test             # conversion, settings recovery/conflicts, modifier state, RTF, actual installed layouts
+.\build.ps1 -Test             # cross-process instance replacement, conversion, settings, modifier state, RTF, installed layouts
 .\build.ps1 -UISmoke          # additionally opens/closes settings and renders all four tabs
 .\build.ps1 -WordSmoke        # additionally creates a separate Word document and closes it without saving
 .\build.ps1 -ClipboardSmoke   # additionally verifies UIA/RTF conversion, selection, read-only and clipboard restoration in a temporary text control
@@ -64,6 +64,8 @@ The Word smoke test requires Microsoft Word and desktop/COM access. It uses its 
 
 Verified on the development machine on 2026-11-10: Release x64 build and 99 assertions in the combined `--word-smoke --clipboard-smoke --ui-smoke` run. Checks cover all four settings tabs and tray lifecycle, native Word formatting/selection, clipboard/UIA conversion, case conversion, pause/resume semantics, shortcut capture, per-layout colors, exclusion matching, settings migration, recovery, and assignment conflicts. All tabs were visually inspected. Hosted GitHub Actions run 42817694355 subsequently passed the Release x64 build and 844 core/UI/DPI assertions, with executable and diagnostic artifacts. Manual VS Code and Chrome acceptance remains pending.
 
-DPI follow-up on 2026-11-10: Release rebuild and 836 assertions passed with `--ui-smoke --dpi-smoke`. Rendered and inspected layouts at 100–300%, tested repeated `WM_DPICHANGED` transitions, dynamically added bindings, and the actual exclusion dialog. The process manifest was verified as PerMonitorV2. These transitions are simulated with window messages; moving between physical monitors with different scale factors has not been separately exercised. To load a rebuilt executable, exit the running instance through the tray before launching it again.
+DPI follow-up on 2026-11-10: Release rebuild and 836 assertions passed with `--ui-smoke --dpi-smoke`. Rendered and inspected layouts at 100–300%, tested repeated `WM_DPICHANGED` transitions, dynamically added bindings, and the actual exclusion dialog. The process manifest was verified as PerMonitorV2. These transitions are simulated with window messages; moving between physical monitors with different scale factors has not been separately exercised. Launching a rebuilt executable now replaces the running instance automatically. Pre-shutdown-protocol builds are asked to exit their UI loop gracefully when identifiable; if they cannot be reached, use Exit in the tray once.
 
 See [PLAN.md](PLAN.md) for accepted decisions and remaining work. MIT is selected for the future open-source release; the license file and copyright-holder details will be handled before distribution. Update checking remains disabled until a public metadata source is available; test builds are updated manually.
+
+Instance replacement follow-up (2026-11-13): Release build and 870 core/UI/DPI assertions passed. Isolated helper processes verify graceful cleanup before takeover, serialization of simultaneous launches, timeout with the old instance left alive, legacy UI-loop shutdown, and replacement of an instance with open settings. `--ui-smoke` includes the tray handover integration check. Test identities are unique and do not signal the user's running instance.

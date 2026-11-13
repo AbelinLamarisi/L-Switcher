@@ -9,16 +9,21 @@ namespace LSwitcher
         [STAThread] private static void Main()
         {
             Application.EnableVisualStyles(); Application.SetCompatibleTextRenderingDefault(false);
-            using (var mutex = new Mutex(false, @"Local\L-Switcher-" + System.Security.Principal.WindowsIdentity.GetCurrent().User.Value))
-            using (var activate = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\L-Switcher-Open-" + System.Security.Principal.WindowsIdentity.GetCurrent().User.Value))
+            try
             {
-                bool owner;
-                try { owner = mutex.WaitOne(0); } catch (AbandonedMutexException) { owner = true; }
-                if (!owner) { activate.Set(); return; }
-                try { using (var context = new TrayApplication(activate)) Application.Run(context); }
-                catch (Exception ex) { MessageBox.Show(ex.Message, "L-Switcher", MessageBoxButtons.OK, MessageBoxIcon.Error); }
-                finally { mutex.ReleaseMutex(); }
+                string user = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
+                using (var instance = new SingleInstance(@"Local\L-Switcher-" + user))
+                using (var activate = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\L-Switcher-Open-" + user))
+                {
+                    instance.Acquire(LegacyInstance.RequestShutdown);
+                    using (var context = new TrayApplication(activate, shutdownRequested: () => instance.ShutdownRequested))
+                    {
+                        instance.Ready();
+                        Application.Run(context);
+                    }
+                }
             }
+            catch (Exception ex) { MessageBox.Show(ex.Message, "L-Switcher", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
     }
 }

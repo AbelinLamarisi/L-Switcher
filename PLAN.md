@@ -35,9 +35,9 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 - Each exclusion can match by executable name or full executable path, selected in the UI.
 - Exclusions apply only while the matching application's window is active. When focus moves to a non-excluded application, hotkeys resume unless manually paused.
 - If a configured layout is removed from Windows, retain its binding, show `Layout unavailable`, and disable that action while the layout is unavailable.
-- Run a single application instance. If a newly launched executable is newer than the running version, request a graceful shutdown of the older instance, wait for it to release resources and the single-instance lock, then start the new version. Do not run both versions concurrently.
-- For an equal or older incoming version, retain the existing instance and open its settings; do not downgrade the running application.
-- If the older instance cannot exit, report the failure instead of starting a second instance or forcibly terminating it. Compare explicit application versions, not file timestamps. Implementing this replacement behavior remains pending.
+- Run a single application instance. Every new launch replaces the running instance: request graceful shutdown, wait for cleanup and release of the single-instance lock, then start the newly launched executable. Do not run both instances concurrently.
+- User simplified replacement on 2026-11-13: do not compare versions or timestamps for now; even an equal or older executable replaces the running instance. This supersedes the earlier version-comparison/no-downgrade rule.
+- If the running instance cannot exit, report the failure instead of starting a second instance or forcibly terminating it. Saved settings survive replacement; unapplied settings edits are discarded as on closing settings.
 - Use one global configured conversion pair. Direction is selected in settings: `Swap both ways`, `First → Second`, or `Second → First`, independently of the currently active layout. Bidirectional mode swaps mixed text within the pair.
 - Leave the active layout unchanged after conversion.
 - Preserve case, spaces, and line breaks. Convert punctuation according to physical key positions. Leave characters outside the configured pair unchanged.
@@ -128,6 +128,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 ### Prototype implementation (2026-11-10)
 
 - Implemented the .NET Framework 4.8 x64 project, settings UI, tray, single-instance activation, keyboard/mouse hooks, direct layout activation, exclusions, startup control, and JSON recovery/backup.
+- On 2026-11-13, replaced open-existing behavior with unconditional graceful handover on every new launch. Startup is serialized; hooks/tray/windows and in-flight conversions finish before the instance lock is released. A 10-second timeout reports failure without starting a second instance. Legacy UI-loop shutdown is supported for identifiable pre-protocol builds. Cross-process tests cover cleanup ordering, concurrent launches, timeout without forced termination, legacy handover, and tray/settings shutdown. Release build and 870 core/UI/DPI assertions passed locally.
 - Implemented physical-key conversion, word-context punctuation, native Word character edits, and a guarded clipboard/UI Automation path with RTF/plain-text support.
 - Added dependency-free automated tests, a build script, UI/Word smoke tests, and GitHub Actions build/artifact configuration.
 - Implemented the subsequently approved Pause/Resume shortcut (including resuming during manual pause and exclusion passthrough), selection uppercase/lowercase/invert-case shortcuts, and a non-executing shortcut test field with tap/hold timing and draft assignment feedback. Existing schema-one settings default these new shortcuts to unassigned.

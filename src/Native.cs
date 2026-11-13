@@ -32,6 +32,10 @@ namespace LSwitcher
         [DllImport("user32.dll")] internal static extern bool DestroyIcon(IntPtr icon);
         [DllImport("oleacc.dll")] internal static extern int AccessibleObjectFromWindow(IntPtr window, uint id, ref Guid iid, [MarshalAs(UnmanagedType.Interface)] out object value);
         internal delegate bool EnumWindowsProc(IntPtr window, IntPtr data);
+        [DllImport("user32.dll")] internal static extern bool EnumWindows(EnumWindowsProc callback, IntPtr data);
+        [DllImport("user32.dll", SetLastError = true)] internal static extern bool PostThreadMessage(uint thread, uint message, IntPtr w, IntPtr l);
+        [DllImport("advapi32.dll", SetLastError = true)] internal static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
+        [DllImport("kernel32.dll")] internal static extern bool CloseHandle(IntPtr handle);
         [DllImport("user32.dll")] internal static extern bool EnumChildWindows(IntPtr window, EnumWindowsProc callback, IntPtr data);
         [DllImport("user32.dll", CharSet = CharSet.Unicode)] internal static extern int GetClassName(IntPtr window, StringBuilder name, int max);
         internal static void Key(int key, bool up)

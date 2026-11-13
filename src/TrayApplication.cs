@@ -23,7 +23,8 @@ namespace LSwitcher
         private Icon icon;
         private System.Collections.Generic.List<KeyboardLayout> installed = Layouts.Installed();
         private int refresh;
-        internal TrayApplication(EventWaitHandle activation, SettingsStore settingsStore = null)
+        private bool shutdownPending;
+        internal TrayApplication(EventWaitHandle activation, SettingsStore settingsStore = null, Func<bool> shutdownRequested = null)
         {
             store = settingsStore ?? new SettingsStore();
             this.activation = activation; bool firstLaunch = !store.Exists; settings = store.Load();
@@ -43,7 +44,18 @@ namespace LSwitcher
             menu.Items.Add(new ToolStripSeparator()); menu.Items.Add("Exit", null, (s, e) => ExitThread());
             tray = new NotifyIcon { ContextMenuStrip = menu, Visible = true };
             tray.MouseClick += (s, e) => { if (e.Button == MouseButtons.Left) OpenSettings(); };
-            timer.Tick += (s, e) => { if (activation.WaitOne(0)) OpenSettings(); UpdateTray(); }; timer.Start(); UpdateTray();
+            timer.Tick += (s, e) =>
+            {
+                if (shutdownRequested != null && shutdownRequested()) shutdownPending = true;
+                if (shutdownPending)
+                {
+                    engine.Paused = true; engine.Reset();
+                    // Finish any clipboard restoration/Word edit before releasing the instance.
+                    if (!conversion.IsBusy) ExitThread();
+                    return;
+                }
+                if (activation.WaitOne(0)) OpenSettings(); UpdateTray();
+            }; timer.Start(); UpdateTray();
             if (firstLaunch || store.LoadWarning != null) dispatcher.BeginInvoke((Action)(() => { OpenSettings(); if (store.LoadWarning != null) MessageBox.Show(form, store.LoadWarning, "L-Switcher", MessageBoxButtons.OK, MessageBoxIcon.Warning); }));
         }
         private void TogglePause() { engine.Paused = !engine.Paused; engine.Reset(); UpdateTray(); }

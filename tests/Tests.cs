@@ -30,15 +30,16 @@ namespace LSwitcher
         }
         [STAThread] private static int Main(string[] args)
         {
+            if (args.Length > 0 && args[0].StartsWith("--instance-", StringComparison.Ordinal)) return InstanceWorker(args);
             try
             {
                 Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
                 Application.EnableVisualStyles();
-                Run(TestTaps); Run(TestValidation); Run(TestStorage); Run(TestConversion); Run(TestCase); Run(TestRichText); Run(TestLayouts); Run(TestPauseAndCapture); Run(TestColors);
+                Run(TestSingleInstance); Run(TestTaps); Run(TestValidation); Run(TestStorage); Run(TestConversion); Run(TestCase); Run(TestRichText); Run(TestLayouts); Run(TestPauseAndCapture); Run(TestColors);
                 // Run COM checks before Application.Run tears down a WinForms synchronization context.
                 if (args.Contains("--word-smoke")) Run(TestWord);
                 if (args.Contains("--clipboard-smoke")) Run(TestClipboard);
-                if (args.Contains("--ui-smoke")) { Run(TestSettingsWindow); Run(TestTrayLifecycle); }
+                if (args.Contains("--ui-smoke")) { Run(TestSettingsWindow); Run(TestTrayLifecycle); Run(TestInstanceTrayShutdown); }
                 if (args.Contains("--dpi-smoke")) Run(TestDpi);
                 Console.WriteLine("PASS: " + assertions + " assertions"); return 0;
             }
