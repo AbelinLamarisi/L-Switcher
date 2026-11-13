@@ -1,6 +1,5 @@
 using System;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
@@ -79,20 +78,12 @@ namespace LSwitcher
             if (refresh++ % 8 == 0) { installed = Layouts.Installed(); engine.AvailableLayouts = new System.Collections.Generic.HashSet<string>(installed.Select(l => l.Id)); }
             IntPtr active = Layouts.ForegroundLayout(); var layout = installed.FirstOrDefault(l => l.Handle == active);
             string label = layout?.Label ?? "??", name = layout?.Name ?? "Unknown layout";
-            bool excluded = engine.Excluded(Native.GetForegroundWindow()), marked = excluded || engine.Paused;
-            string status = excluded ? " — Hotkeys disabled for this app" : engine.Paused ? " — Hotkeys paused" : "";
-            string tooltip = name + status; if (tooltip.Length > 63) tooltip = name.Substring(0, Math.Max(0, 62 - status.Length)) + "…" + status;
-            tray.Text = tooltip; pause.Text = engine.Paused ? "Resume hotkeys" : "Pause hotkeys";
+            bool excluded = engine.Excluded(Native.GetForegroundWindow());
+            tray.Text = TrayPresentation.Tooltip(name, engine.Paused, excluded); pause.Text = engine.Paused ? "Resume hotkeys" : "Pause hotkeys";
             Color labelColor = settings.LabelColor(layout?.Id);
-            string state = (layout?.Id ?? "") + label + marked + labelColor.ToArgb(); if (state == lastIconState) return; lastIconState = state;
-            using (var bitmap = new Bitmap(32, 32))
-            using (var graphics = Graphics.FromImage(bitmap))
-            using (var font = new Font(SystemFonts.MessageBoxFont.FontFamily, 18, FontStyle.Bold, GraphicsUnit.Pixel))
+            string state = (layout?.Id ?? "") + label + engine.Paused + ":" + excluded + labelColor.ToArgb(); if (state == lastIconState) return; lastIconState = state;
+            using (var bitmap = TrayPresentation.Draw(label, labelColor, engine.Paused, excluded))
             {
-                graphics.SmoothingMode = SmoothingMode.AntiAlias; graphics.Clear(Color.Transparent);
-                using (var background = new SolidBrush(SystemColors.WindowText)) graphics.FillRectangle(background, 0, 2, 32, 27);
-                using (var foreground = new SolidBrush(labelColor)) graphics.DrawString(label, font, foreground, new RectangleF(0, 4, 32, 26), new StringFormat { Alignment = StringAlignment.Center });
-                if (marked) { graphics.FillRectangle(Brushes.Orange, 21, 21, 4, 10); graphics.FillRectangle(Brushes.Orange, 27, 21, 4, 10); }
                 IntPtr handle = bitmap.GetHicon(); Icon replacement; try { replacement = (Icon)Icon.FromHandle(handle).Clone(); } finally { Native.DestroyIcon(handle); }
                 tray.Icon = replacement; var old = icon; icon = replacement; old?.Dispose();
             }

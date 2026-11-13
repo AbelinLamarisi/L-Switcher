@@ -18,7 +18,7 @@
   <ItemGroup>
     <Compile Include="src\Program.cs"/><Compile Include="src\Native.cs"/><Compile Include="src\Settings.cs"/><Compile Include="src\SingleInstance.cs"/>
     <Compile Include="src\Layouts.cs"/><Compile Include="src\Hotkeys.cs"/><Compile Include="src\Conversion.cs"/>
-    <Compile Include="src\SettingsForm.cs"/><Compile Include="src\TrayApplication.cs"/><Compile Include="src\DpiForm.cs"/>
+    <Compile Include="src\SettingsForm.cs"/><Compile Include="src\TrayApplication.cs"/><Compile Include="src\TrayPresentation.cs"/><Compile Include="src\DpiForm.cs"/>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
 </Project>

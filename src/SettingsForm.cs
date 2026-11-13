@@ -13,44 +13,84 @@ namespace LSwitcher
         private readonly HashSet<int> pressed = new HashSet<int>();
         private readonly Dictionary<int, long> starts = new Dictionary<int, long>();
         private bool combined;
-        internal Shortcut Value = new Shortcut();
+        private Shortcut pending;
+        private int activationKey;
+        internal Shortcut Value { get; private set; } = new Shortcut();
+        internal bool IsRecording { get; private set; }
         internal event Action<Shortcut, long> Tested;
+        internal event Action ValueChanged;
+        internal event Action Cleared;
         internal ShortcutBox(HotkeyEngine engine, Shortcut value)
         {
             this.engine = engine; Value = value ?? new Shortcut(); ReadOnly = true; Width = 230; Text = Value.ToString();
-            GotFocus += (s, e) => { pressed.Clear(); starts.Clear(); combined = false; engine.Capture = CaptureKey; BackColor = SystemColors.Info; };
-            LostFocus += (s, e) => { if (engine.Capture == CaptureKey) engine.Capture = null; BackColor = SystemColors.Window; };
+            LostFocus += (s, e) => CancelRecording();
+        }
+        protected override void OnMouseDown(MouseEventArgs e) { base.OnMouseDown(e); if (e.Button == MouseButtons.Left) BeginRecording(); }
+        protected override bool ProcessDialogKey(Keys keyData)
+        {
+            if (!IsRecording && keyData == Keys.Enter) { BeginRecording((int)Keys.Enter); return true; }
+            if (IsRecording && keyData == Keys.Escape) { CancelRecording(); return true; }
+            return base.ProcessDialogKey(keyData);
+        }
+        internal void BeginRecording(int initiatingKey = 0)
+        {
+            if (IsRecording) return;
+            pressed.Clear(); starts.Clear(); combined = false; pending = null; activationKey = initiatingKey;
+            IsRecording = true; engine.Capture = CaptureKey; BackColor = SystemColors.Info; Text = "Press a shortcut…";
+        }
+        internal void CancelRecording()
+        {
+            if (engine.Capture == CaptureKey) engine.Capture = null;
+            IsRecording = false; pending = null; pressed.Clear(); starts.Clear(); activationKey = 0;
+            BackColor = SystemColors.Window; Text = Value.ToString();
         }
         internal bool CaptureKey(int key, bool up)
         {
+            if (!IsRecording) return false;
+            if (key == activationKey) { if (up) activationKey = 0; return true; }
+            if (key == (int)Keys.Escape) { if (!up) CancelRecording(); return true; }
             if (!up)
             {
                 if (!pressed.Add(key)) return true;
                 starts[key] = Stopwatch.GetTimestamp();
+                if (HotkeyEngine.IsModifier(key) && pressed.Count > 1) combined = true;
                 if (!HotkeyEngine.IsModifier(key))
                 {
-                    Value = new Shortcut { Key = key, Modifiers = pressed.Aggregate(0, (flags, k) => flags | HotkeyEngine.ModifierFlag(k)) }; combined = true;
+                    pending = new Shortcut { Key = key, Modifiers = pressed.Aggregate(0, (flags, k) => flags | HotkeyEngine.ModifierFlag(k)) }; combined = true;
                 }
             }
             else
             {
                 bool standalone = HotkeyEngine.IsModifier(key) && !combined && pressed.Count == 1;
-                if (standalone) Value = new Shortcut { Key = key };
+                if (standalone) pending = new Shortcut { Key = key };
                 long started;
-                if ((standalone || !HotkeyEngine.IsModifier(key)) && starts.TryGetValue(key, out started)) Tested?.Invoke(Value, (Stopwatch.GetTimestamp() - started) * 1000 / Stopwatch.Frequency);
+                if ((standalone || !HotkeyEngine.IsModifier(key)) && pending != null && pending.Key == key && starts.TryGetValue(key, out started))
+                {
+                    long elapsed = (Stopwatch.GetTimestamp() - started) * 1000 / Stopwatch.Frequency;
+                    var result = pending; bool changed = result.Identity != Value.Identity; Value = result; CancelRecording();
+                    if (changed) ValueChanged?.Invoke(); Tested?.Invoke(Value, elapsed); return true;
+                }
                 starts.Remove(key);
                 pressed.Remove(key); if (pressed.Count == 0) combined = false;
             }
-            Text = Value.ToString(); return true;
+            return true;
         }
-        internal void ClearShortcut() { Value = new Shortcut(); Text = ""; }
-        protected override void Dispose(bool disposing) { if (disposing && engine.Capture == CaptureKey) engine.Capture = null; base.Dispose(disposing); }
+        internal void ClearShortcut() { bool changed = Value.Key != 0 || Value.Modifiers != 0; CancelRecording(); Value = new Shortcut(); Text = ""; if (changed) ValueChanged?.Invoke(); Cleared?.Invoke(); }
+        protected override void Dispose(bool disposing) { if (disposing) CancelRecording(); base.Dispose(disposing); }
     }
     internal sealed class SettingsForm : DpiForm
     {
         private readonly Settings draft;
         private readonly HotkeyEngine engine;
         private readonly Action<Settings> save;
+        private readonly Action<string, string> showMessage;
+        private readonly TabControl tabs = new TabControl { Dock = DockStyle.Fill, Name = "SettingsTabs" };
+        private readonly Dictionary<ShortcutBox, long> edited = new Dictionary<ShortcutBox, long>();
+        private long editSequence;
+        private string appliedSignature;
+        private bool initialized;
+        private Button apply;
+        private Label detectionHint;
         private readonly List<KeyboardLayout> layouts = Layouts.Installed();
         private readonly FlowLayoutPanel bindingRows = new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true };
         private readonly List<Tuple<ComboBox, ShortcutBox, Panel>> rows = new List<Tuple<ComboBox, ShortcutBox, Panel>>();
@@ -60,12 +100,13 @@ namespace LSwitcher
         private NumericUpDown tap;
         private CheckBox startup;
         private readonly ListBox exclusions = new ListBox { Dock = DockStyle.Fill, HorizontalScrollbar = true };
-        internal SettingsForm(Settings settings, HotkeyEngine engine, Action<Settings> save)
+        internal SettingsForm(Settings settings, HotkeyEngine engine, Action<Settings> save, Action<string, string> showMessage = null)
         {
             draft = settings.Clone(); this.engine = engine; this.save = save;
-            Text = "L-Switcher Settings"; ClientSize = new Size(800, 650); MinimumSize = new Size(780, 580);
+            this.showMessage = showMessage ?? ((title, message) => MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Warning));
+            Text = "L-Switcher Settings"; ClientSize = new Size(800, 650);
+            FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
-            var tabs = new TabControl { Dock = DockStyle.Fill };
             var layoutsTab = new TabPage("Layouts") { Padding = new Padding(10) };
             bindingRows.BackColor = SystemColors.Window;
             bindingRows.Padding = new Padding(8);
@@ -77,24 +118,27 @@ namespace LSwitcher
             });
             bindingRows.Controls.Add(header);
             layoutsTab.Controls.Add(bindingRows);
-            var add = ButtonFor("Add"); add.Dock = DockStyle.Bottom; add.Click += (s, e) => AddBinding(new LayoutBinding()); layoutsTab.Controls.Add(add);
-            var hint = new Label { Text = "Click a shortcut field, then press a key or combination. Standalone modifiers trigger on a short release.", Dock = DockStyle.Top, Height = 40 }; layoutsTab.Controls.Add(hint);
+            var addArea = FitRow(); addArea.Dock = DockStyle.Bottom; var add = ButtonFor("Add layout", 100); add.Name = "AddLayout";
+            add.Click += (s, e) => AddBinding(new LayoutBinding(), true); addArea.Controls.Add(add); layoutsTab.Controls.Add(addArea);
+            var hint = new Label { Text = "Click or press Enter to record a shortcut; Esc cancels. Tab moves between idle fields.", Dock = DockStyle.Top, Height = 40 }; layoutsTab.Controls.Add(hint);
             layoutsTab.Controls.Add(ColorSettings());
             tabs.TabPages.Add(layoutsTab); foreach (var binding in draft.Bindings) AddBinding(binding);
             var conversionTab = new TabPage("Conversion") { Padding = new Padding(14) };
-            var conversionPanel = Vertical(); first = LayoutCombo(draft.FirstLayout); second = LayoutCombo(draft.SecondLayout);
+            var conversionPanel = Vertical(); first = LayoutCombo(draft.FirstLayout); second = LayoutCombo(draft.SecondLayout); first.Name = "FirstLayout"; second.Name = "SecondLayout";
             var layoutGroup = SettingsGroup("Keyboard layout conversion");
             layoutGroup.Controls.Add(FieldRow("First layout", first));
             layoutGroup.Controls.Add(FieldRow("Second layout", second));
-            direction = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 340 };
+            direction = new ComboBox { Name = "ConversionDirection", DropDownStyle = ComboBoxStyle.DropDownList, Width = 480 };
             direction.Items.AddRange(new object[] { "Swap both ways", "First → Second", "Second → First" }); direction.SelectedIndex = (int)draft.Direction;
             layoutGroup.Controls.Add(FieldRow("Direction", direction));
-            conversion = new ShortcutBox(engine, draft.ConversionShortcut);
+            conversion = AssignmentBox(draft.ConversionShortcut, "ConversionShortcut");
             layoutGroup.Controls.Add(NamedShortcutRow("Shortcut", conversion));
-            layoutGroup.Controls.Add(new Label { AutoSize = false, Width = 660, Height = 58, Margin = new Padding(3, 10, 3, 3), ForeColor = SystemColors.GrayText, Text = "Swap both ways identifies each word’s layout; punctuation follows the preceding word. Ambiguous words follow the preceding direction (first layout initially)." });
+            detectionHint = new Label { Name = "WordDetectionHint", AutoSize = false, Width = 660, Height = 58, Margin = new Padding(3, 10, 3, 3), ForeColor = SystemColors.GrayText, Text = "Swap both ways identifies each word’s layout; punctuation follows the preceding word. Ambiguous words follow the preceding direction (first layout initially)." }; layoutGroup.Controls.Add(detectionHint);
+            first.SelectedIndexChanged += (s, e) => UpdateDirections(); second.SelectedIndexChanged += (s, e) => UpdateDirections();
+            direction.SelectedIndexChanged += (s, e) => detectionHint.Visible = direction.SelectedIndex == 0; UpdateDirections();
             conversionPanel.Controls.Add(layoutGroup.Parent);
             var caseGroup = SettingsGroup("Selection case");
-            uppercase = new ShortcutBox(engine, draft.UppercaseShortcut); lowercase = new ShortcutBox(engine, draft.LowercaseShortcut); invertCase = new ShortcutBox(engine, draft.InvertCaseShortcut);
+            uppercase = AssignmentBox(draft.UppercaseShortcut, "UppercaseShortcut"); lowercase = AssignmentBox(draft.LowercaseShortcut, "LowercaseShortcut"); invertCase = AssignmentBox(draft.InvertCaseShortcut, "InvertCaseShortcut");
             caseGroup.Controls.Add(NamedShortcutRow("UPPERCASE", uppercase));
             caseGroup.Controls.Add(NamedShortcutRow("lowercase", lowercase));
             caseGroup.Controls.Add(NamedShortcutRow("Invert case", invertCase));
@@ -103,29 +147,58 @@ namespace LSwitcher
             conversionTab.Controls.Add(conversionPanel); tabs.TabPages.Add(conversionTab);
             var exclusionsTab = new TabPage("Exclusions") { Padding = new Padding(12) }; exclusionsTab.Controls.Add(exclusions);
             var exclusionButtons = FitRow(); exclusionButtons.Dock = DockStyle.Bottom;
-            var addExclusion = ButtonFor("Add"); var removeExclusion = ButtonFor("Remove");
-            addExclusion.Click += (s, e) => AddExclusion(); removeExclusion.Click += (s, e) => { if (exclusions.SelectedItem != null) exclusions.Items.Remove(exclusions.SelectedItem); };
+            exclusions.Name = "Exclusions";
+            var addExclusion = ButtonFor("Add"); var removeExclusion = ButtonFor("Remove"); removeExclusion.Name = "RemoveExclusion"; removeExclusion.Enabled = false;
+            exclusions.SelectedIndexChanged += (s, e) => removeExclusion.Enabled = exclusions.SelectedItem != null;
+            addExclusion.Click += (s, e) => AddExclusion(); removeExclusion.Click += (s, e) => { if (exclusions.SelectedItem != null) { exclusions.Items.Remove(exclusions.SelectedItem); RefreshDraft(); } };
             exclusionButtons.Controls.AddRange(new Control[] { addExclusion, removeExclusion }); exclusionsTab.Controls.Add(exclusionButtons);
             exclusionsTab.Controls.Add(new Label { Text = "All hotkeys pass through while a matching application is in the foreground.", Dock = DockStyle.Top, Height = 32 });
             foreach (var exclusion in draft.Exclusions) exclusions.Items.Add(exclusion); tabs.TabPages.Add(exclusionsTab);
             var generalTab = new TabPage("General") { Padding = new Padding(14) }; var general = Vertical();
-            startup = new CheckBox { Text = "Start with Windows", AutoSize = true, Checked = draft.StartWithWindows };
-            tap = new NumericUpDown { Minimum = 50, Maximum = 2000, Increment = 50, Value = draft.TapMilliseconds, Width = 150 };
+            startup = new CheckBox { Name = "Startup", Text = "Start with Windows", AutoSize = true, Checked = draft.StartWithWindows };
+            tap = new NumericUpDown { Name = "TapLimit", Minimum = 50, Maximum = 2000, Increment = 50, Value = draft.TapMilliseconds, Width = 150 };
             general.Controls.Add(startup); general.Controls.Add(LabelFor("Short-tap time limit (milliseconds)")); general.Controls.Add(tap);
-            pauseShortcut = new ShortcutBox(engine, draft.PauseShortcut); general.Controls.Add(LabelFor("Pause / Resume hotkeys")); general.Controls.Add(ShortcutRow(pauseShortcut));
-            general.Controls.Add(LabelFor("Shortcut test — focus here and press a key or combination"));
+            pauseShortcut = AssignmentBox(draft.PauseShortcut, "PauseShortcut"); general.Controls.Add(LabelFor("Pause / Resume hotkeys")); general.Controls.Add(ShortcutRow(pauseShortcut));
+            general.Controls.Add(LabelFor("Shortcut test — click or press Enter to record"));
             var test = new ShortcutBox(engine, new Shortcut()) { Name = "ShortcutTest" }; general.Controls.Add(ShortcutRow(test));
             var feedback = new Label { Name = "ShortcutTestFeedback", Width = 700, Height = 75, Text = "Shows tap/hold and the assigned action from current settings. No action is executed." }; general.Controls.Add(feedback);
+            string idleFeedback = feedback.Text; test.Cleared += () => feedback.Text = idleFeedback;
             test.Tested += (shortcut, milliseconds) => feedback.Text = shortcut + " — " + (milliseconds <= tap.Value ? "Short tap" : "Hold") + " (" + milliseconds + " ms)\nAssigned action: " + DescribeAction(shortcut) + "\nTest only — action not executed.";
             general.Controls.Add(new Label { Width = 700, Height = 90, Text = "Settings: %LOCALAPPDATA%\\L-Switcher\\settings.json\n\nPause is temporary and resets when the application restarts.\nElevated applications, Remote Desktop, and games are outside prototype support." });
             generalTab.Controls.Add(general); tabs.TabPages.Add(generalTab); Controls.Add(tabs);
             var buttons = FitRow(); buttons.Dock = DockStyle.Bottom; buttons.FlowDirection = FlowDirection.RightToLeft; buttons.Padding = new Padding(8);
-            var apply = ButtonFor("Apply"); apply.Click += (s, e) => ApplyChanges();
-            var cancel = ButtonFor("Cancel"); cancel.DialogResult = DialogResult.Cancel; cancel.Click += (s, e) => Close();
-            var ok = ButtonFor("OK"); ok.Click += (s, e) => { if (ApplyChanges()) Close(); };
+            apply = ButtonFor("Apply"); apply.Name = "ApplySettings"; apply.TabIndex = 2; apply.Click += (s, e) => ApplyChanges();
+            var cancel = ButtonFor("Cancel"); cancel.TabIndex = 1; cancel.DialogResult = DialogResult.Cancel; cancel.Click += (s, e) => Close();
+            var ok = ButtonFor("OK"); ok.TabIndex = 0; ok.Click += (s, e) => { if (ApplyChanges()) Close(); };
             buttons.Controls.AddRange(new Control[] { apply, cancel, ok }); Controls.Add(buttons); AcceptButton = ok; CancelButton = cancel;
+            appliedSignature = Signature(settings); initialized = true;
+            foreach (var combo in AllControls(this).OfType<ComboBox>()) combo.SelectedIndexChanged += (s, e) => RefreshDraft();
+            startup.CheckedChanged += (s, e) => RefreshDraft(); tap.ValueChanged += (s, e) => RefreshDraft(); RefreshDraft();
         }
         private static FlowLayoutPanel Vertical() { return new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true }; }
+        private static IEnumerable<Control> AllControls(Control parent)
+        {
+            foreach (Control child in parent.Controls) { yield return child; foreach (Control descendant in AllControls(child)) yield return descendant; }
+        }
+        private ShortcutBox AssignmentBox(Shortcut value, string name)
+        {
+            var box = new ShortcutBox(engine, value) { Name = name };
+            box.ValueChanged += () => { edited[box] = ++editSequence; RefreshDraft(); };
+            box.Tested += (shortcut, elapsed) => edited[box] = ++editSequence; return box;
+        }
+        private void UpdateDirections()
+        {
+            string a = first.SelectedItem?.ToString() ?? "First layout", b = second.SelectedItem?.ToString() ?? "Second layout";
+            direction.Items[1] = a + " → " + b; direction.Items[2] = b + " → " + a;
+            direction.DropDownWidth = Math.Max(direction.Width, TextRenderer.MeasureText(a + " → " + b, direction.Font).Width + 30);
+            detectionHint.Visible = direction.SelectedIndex == 0;
+        }
+        private static string Signature(Settings settings)
+        {
+            var normalized = settings.Clone(); normalized.LabelColors = normalized.LabelColors.OrderBy(c => c.LayoutId, StringComparer.Ordinal).ToList();
+            using (var stream = new System.IO.MemoryStream()) { Settings.Serializer.WriteObject(stream, normalized); return Convert.ToBase64String(stream.ToArray()); }
+        }
+        private void RefreshDraft() { if (initialized) apply.Enabled = Signature(ReadDraft()) != appliedSignature; }
         private static Button ButtonFor(string text, int width = 75) { return new Button { Text = text, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(width, 28) }; }
         private static FlowLayoutPanel FitRow(int width = 0) { return new FlowLayoutPanel { AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink, MinimumSize = new Size(width, 0), WrapContents = false, Margin = Padding.Empty }; }
         private static FlowLayoutPanel SettingsGroup(string title)
@@ -150,7 +223,7 @@ namespace LSwitcher
                 if (!selector.Items.Cast<KeyboardLayout>().Any(l => l.Id == color.LayoutId)) selector.Items.Add(new KeyboardLayout { Id = color.LayoutId, Name = "Layout unavailable (" + color.LayoutId + ")", Label = "??" });
             var choose = ButtonFor("Color…", 80); var reset = ButtonFor("Default", 80);
             var preview = new Label { Name = "LayoutColorPreview", Width = 55, Height = 27, BackColor = SystemColors.WindowText, TextAlign = ContentAlignment.MiddleCenter };
-            Action update = () => { var layout = selector.SelectedItem as KeyboardLayout; preview.Text = layout?.Label ?? "??"; preview.ForeColor = draft.LabelColor(layout?.Id); choose.Enabled = reset.Enabled = layout != null; };
+            Action update = () => { var layout = selector.SelectedItem as KeyboardLayout; preview.Text = layout?.Label ?? "??"; preview.ForeColor = draft.LabelColor(layout?.Id); choose.Enabled = reset.Enabled = layout != null; RefreshDraft(); };
             selector.SelectedIndexChanged += (s, e) => update();
             choose.Click += (s, e) =>
             {
@@ -173,7 +246,12 @@ namespace LSwitcher
         private static Panel ShortcutRow(ShortcutBox box)
         {
             var row = FitRow(350);
-            var clear = ButtonFor("Clear", 65); clear.Click += (s, e) => box.ClearShortcut(); row.Controls.Add(box); row.Controls.Add(clear); return row;
+            var clear = ClearButton(box); row.Controls.Add(box); row.Controls.Add(clear); return row;
+        }
+        private static Button ClearButton(ShortcutBox box)
+        {
+            var clear = ButtonFor("Clear", 65); clear.Name = "ClearShortcut"; clear.Enabled = box.Value.Key != 0;
+            box.ValueChanged += () => clear.Enabled = box.Value.Key != 0; clear.Click += (s, e) => box.ClearShortcut(); return clear;
         }
         private static Panel NamedShortcutRow(string label, ShortcutBox box)
         {
@@ -182,22 +260,27 @@ namespace LSwitcher
         }
         private string DescribeAction(Shortcut shortcut)
         {
-            var actions = new List<string>();
-            foreach (var row in rows) if (row.Item2.Value.Key != 0 && row.Item2.Value.Identity == shortcut.Identity) actions.Add("Activate " + (row.Item1.SelectedItem?.ToString() ?? "Layout unavailable"));
-            foreach (var action in new[] { Tuple.Create(conversion, "Convert keyboard layout"), Tuple.Create(pauseShortcut, "Pause / Resume"), Tuple.Create(uppercase, "Uppercase selection"), Tuple.Create(lowercase, "Lowercase selection"), Tuple.Create(invertCase, "Invert selection case") })
-                if (action.Item1.Value.Key != 0 && action.Item1.Value.Identity == shortcut.Identity) actions.Add(action.Item2);
+            var actions = Assignments().Where(a => a.Item1.Value.Key != 0 && a.Item1.Value.Identity == shortcut.Identity).Select(a => a.Item2).ToList();
             return actions.Count == 0 ? "None" : string.Join("; ", actions);
         }
-        private void AddBinding(LayoutBinding binding)
+        private IEnumerable<Tuple<ShortcutBox, string>> Assignments()
+        {
+            foreach (var row in rows) yield return Tuple.Create(row.Item2, "Activate " + (row.Item1.SelectedItem?.ToString() ?? "Layout unavailable"));
+            yield return Tuple.Create(conversion, "Convert keyboard layout"); yield return Tuple.Create(pauseShortcut, "Pause / Resume");
+            yield return Tuple.Create(uppercase, "Uppercase selection"); yield return Tuple.Create(lowercase, "Lowercase selection"); yield return Tuple.Create(invertCase, "Invert selection case");
+        }
+        private void AddBinding(LayoutBinding binding, bool focus = false)
         {
             var panel = FitRow(700); panel.Margin = new Padding(0, 0, 0, 1); panel.Padding = new Padding(4, 8, 4, 8);
-            var layout = LayoutCombo(binding.LayoutId); layout.Width = 290;
-            var shortcut = new ShortcutBox(engine, binding.Shortcut) { Width = 205 };
-            var clear = ButtonFor("Clear", 65); clear.Click += (s, e) => shortcut.ClearShortcut();
+            var layout = LayoutCombo(binding.LayoutId); layout.Name = "BindingLayout"; layout.Width = 290;
+            var shortcut = AssignmentBox(binding.Shortcut, "LayoutShortcut"); shortcut.Width = 205;
+            var clear = ClearButton(shortcut);
             var remove = ButtonFor("Remove");
             var row = Tuple.Create<ComboBox, ShortcutBox, Panel>(layout, shortcut, panel); rows.Add(row);
-            remove.Click += (s, e) => { rows.Remove(row); bindingRows.Controls.Remove(panel); panel.Dispose(); RefreshBindingColors(); };
+            layout.SelectedIndexChanged += (s, e) => RefreshDraft();
+            remove.Click += (s, e) => { rows.Remove(row); edited.Remove(shortcut); bindingRows.Controls.Remove(panel); panel.Dispose(); RefreshBindingColors(); RefreshDraft(); };
             panel.Controls.AddRange(new Control[] { layout, shortcut, clear, remove }); AddDpiControl(bindingRows, panel); RefreshBindingColors();
+            RefreshDraft(); if (focus) { bindingRows.PerformLayout(); bindingRows.ScrollControlIntoView(panel); layout.Focus(); }
         }
         private void RefreshBindingColors()
         {
@@ -216,24 +299,50 @@ namespace LSwitcher
                 {
                     string value = path.Text.Trim().Trim('"'); if (!full.Checked) value = System.IO.Path.GetFileName(value);
                     if (string.IsNullOrWhiteSpace(value) || (full.Checked && !Exclusion.IsAbsolute(value))) { MessageBox.Show(dialog, "Enter an executable name or an absolute path."); return; }
-                    exclusions.Items.Add(new Exclusion { Executable = value, FullPath = full.Checked }); dialog.Close();
+                    exclusions.SelectedIndex = exclusions.Items.Add(new Exclusion { Executable = value, FullPath = full.Checked }); RefreshDraft(); dialog.Close();
                 };
                 dialog.Controls.AddRange(new Control[] { path, browse, full, add }); dialog.AcceptButton = add; dialog.ShowDialog(this);
             }
         }
-        private bool ApplyChanges()
+        internal Settings ReadDraft()
+        {
+            var result = draft.Clone();
+            result.Bindings = rows.Select(r => new LayoutBinding { LayoutId = (r.Item1.SelectedItem as KeyboardLayout)?.Id, Shortcut = r.Item2.Value }).ToList();
+            result.FirstLayout = (first.SelectedItem as KeyboardLayout)?.Id; result.SecondLayout = (second.SelectedItem as KeyboardLayout)?.Id;
+            result.ConversionShortcut = conversion.Value; result.Direction = (ConversionDirection)direction.SelectedIndex;
+            result.PauseShortcut = pauseShortcut.Value; result.UppercaseShortcut = uppercase.Value; result.LowercaseShortcut = lowercase.Value; result.InvertCaseShortcut = invertCase.Value;
+            result.TapMilliseconds = (int)tap.Value; result.StartWithWindows = startup.Checked; result.Exclusions = exclusions.Items.Cast<Exclusion>().ToList();
+            return result;
+        }
+        private void FocusAssignment(ShortcutBox field)
+        {
+            Control parent = field;
+            while (parent != null && !(parent is TabPage)) parent = parent.Parent;
+            if (parent != null) tabs.SelectedTab = (TabPage)parent;
+            for (Control owner = field.Parent; owner != null; owner = owner.Parent)
+            { var scroll = owner as ScrollableControl; if (scroll != null && scroll.AutoScroll) scroll.ScrollControlIntoView(field); }
+            field.Focus();
+        }
+        internal bool ApplyChanges()
         {
             try
             {
-                var result = draft.Clone();
-                result.Bindings = rows.Select(r => new LayoutBinding { LayoutId = (r.Item1.SelectedItem as KeyboardLayout)?.Id, Shortcut = r.Item2.Value }).ToList();
-                result.FirstLayout = (first.SelectedItem as KeyboardLayout)?.Id; result.SecondLayout = (second.SelectedItem as KeyboardLayout)?.Id;
-                result.ConversionShortcut = conversion.Value; result.Direction = (ConversionDirection)direction.SelectedIndex;
-                result.PauseShortcut = pauseShortcut.Value; result.UppercaseShortcut = uppercase.Value; result.LowercaseShortcut = lowercase.Value; result.InvertCaseShortcut = invertCase.Value;
-                result.TapMilliseconds = (int)tap.Value; result.StartWithWindows = startup.Checked; result.Exclusions = exclusions.Items.Cast<Exclusion>().ToList();
-                result.Validate(); save(result); return true;
+                foreach (var field in AllControls(this).OfType<ShortcutBox>()) field.CancelRecording();
+                var conflict = Assignments().Where(a => a.Item1.Value.Key != 0).GroupBy(a => a.Item1.Value.Identity).Where(g => g.Count() > 1)
+                    .OrderByDescending(g => g.Max(a => edited.ContainsKey(a.Item1) ? edited[a.Item1] : 0)).FirstOrDefault();
+                if (conflict != null)
+                {
+                    var target = conflict.OrderByDescending(a => edited.ContainsKey(a.Item1) ? edited[a.Item1] : 0).First().Item1;
+                    showMessage("Conflicting shortcuts", "Shortcut " + target.Value + " is assigned to:\n\n" + string.Join("\n", conflict.Select(a => "• " + a.Item2)) + "\n\nChoose a different shortcut for one of these actions.");
+                    FocusAssignment(target); return false;
+                }
+                var result = ReadDraft(); result.Validate();
+                // OK must still persist initially unchanged defaults so the next launch
+                // is no longer treated as a first launch. Apply itself is disabled when clean.
+                string signature = Signature(result);
+                save(result); appliedSignature = signature; RefreshDraft(); return true;
             }
-            catch (Exception ex) { MessageBox.Show(this, ex.Message, "Settings could not be saved", MessageBoxButtons.OK, MessageBoxIcon.Warning); return false; }
+            catch (Exception ex) { showMessage("Settings could not be saved", ex.Message); return false; }
         }
     }
 }

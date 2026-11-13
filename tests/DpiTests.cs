@@ -60,7 +60,7 @@ namespace LSwitcher
                                 using (var bitmap = new Bitmap(form.Width, form.Height)) { form.DrawToBitmap(bitmap, new Rectangle(Point.Empty, form.Size)); bitmap.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "dpi-" + dpi + "-" + page.Text.ToLowerInvariant() + ".png")); }
                             }
                             tabs.SelectedIndex = 0;
-                            tabs.TabPages[0].Controls.OfType<Button>().Single(b => b.Text == "Add").PerformClick();
+                            ((Button)form.Controls.Find("AddLayout", true).Single()).PerformClick();
                             var bindings = tabs.TabPages[0].Controls.OfType<FlowLayoutPanel>().Single(p => p.Dock == DockStyle.Fill);
                             var added = bindings.Controls[bindings.Controls.Count - 1];
                             Equal((int)Math.Round(205 * dpi / 96.0, MidpointRounding.AwayFromZero), Descendants(added).OfType<ShortcutBox>().Single().Width, "New bindings use current DPI");

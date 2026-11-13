@@ -64,7 +64,7 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 - Use tabs: `Layouts`, `Conversion`, `Exclusions`, and `General`.
 - The `Exclusions` tab contains a list with `Add` and `Remove` buttons and a choice of matching by executable name or full executable path.
 - Users add layout-binding rows with an `Add` button; do not prepopulate bindings.
-- Capture a shortcut by focusing its field and pressing the desired key or combination. Provide a `Clear` button.
+- Start shortcut recording with a click or Enter. Provide a `Clear` button.
 - Conflicting assignments block saving and show an explanation.
 - Include a shortcut test field in the prototype settings. It shows the detected key or combination, short tap versus hold, and assigned action without executing that action while testing.
 - Use `OK`, `Cancel`, and `Apply` buttons.
@@ -72,7 +72,7 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 - Automatically open settings on first launch. Subsequent launches start in the tray.
 - A single left click on the tray icon opens settings. Right click opens `Settings…`, `Pause hotkeys` / `Resume hotkeys`, and `Exit`.
 - While paused, retain the two-letter active-layout label and add a small pause mark.
-- When hotkeys are disabled by an application exclusion, show the pause mark and tooltip text `Hotkeys disabled for this app`. Keep application exclusion state separate from manual pause.
+- Give application exclusions a distinct tray mark and show `Hotkeys disabled for this app` in the tooltip. Include both statuses when manual pause and an exclusion apply together.
 - The tray tooltip shows the full layout name and pause status, e.g. `English (United States) — Hotkeys paused`.
 - Layouts of the same language share their two-letter label (e.g. `EN`); the tooltip distinguishes their full names.
 - The `Conversion` tab contains two layout selectors, a shortcut field, and the `Direction` selector described above.
@@ -124,6 +124,19 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - No hard numerical resource or executable-size limits for now. First measure executable size, memory, and CPU usage while idle in the tray, with settings open, and after repeated conversions. Avoid perceptible input delays, minimize idle CPU use, and investigate sustained memory growth. Decide optimization targets from measurements.
 
 ## Next steps
+
+### Approved settings and tray improvements (2026-11-13)
+
+Keep the settings window fixed in size and retain per-monitor DPI scaling. The first two items were implemented first; all six improvements below are now implemented.
+
+- [x] **Shortcut recording.** Tab and Shift+Tab move between idle fields. A click or Enter starts recording and displays `Press a shortcut…`. Esc cancels recording and restores the previous value. Keyboard-only navigation and recording are verified in both assignment fields and the shortcut tester.
+- [x] **Conflicting assignments.** When saving detects a duplicate, report the shortcut and both assigned actions. After the message closes, select the tab containing the most recently edited conflicting field and focus it. Verified with a layout activation and a conversion command assigned the same shortcut, in both edit orders, including re-recording an unchanged value.
+- [x] **Adding a layout.** A compact `Add layout` button is below the table on the left. Adding a row scrolls it into view and focuses its layout selector, including when the table extends beyond the visible area.
+- [x] **Conversion direction.** Both one-way direction options use the selected layout names and refresh when either selector changes. The word-detection explanation is shown only for `Swap both ways`.
+- [x] **Button states and tester feedback.** `Apply` is enabled only while the draft differs from the last successfully applied settings; reverting an edit or saving disables it. Exclusion `Remove` requires a selection and shortcut `Clear` requires an assigned value. Clearing the tester resets its action and timing feedback. OK still saves unchanged defaults to complete first-launch setup.
+- [x] **Tray status.** Orange pause bars represent manual pause; a separate red cross badge represents an excluded application. All four icon/tooltip combinations are verified, including both explanations when pause and exclusion coincide.
+
+Validation on 2026-11-13: Release x64 build and 967 core/UI/DPI assertions passed. UI checks cover keyboard-only capture in assignment/test fields, Esc/focus cancellation, conflict messages and focus in both edit orders, overflowing layout rows, changes/reverts/successful and failed saves, tester reset, direction labels, and tray states. The settings and tray previews were visually inspected.
 
 ### Prototype implementation (2026-11-10)
 

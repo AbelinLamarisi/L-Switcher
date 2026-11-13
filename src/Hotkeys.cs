@@ -100,6 +100,9 @@ namespace LSwitcher
                     if (Capture(key, up)) { if (!up) suppressed.Add(key); else suppressed.Remove(key); return (IntPtr)1; }
                 }
                 bool wasSuppressed = up && suppressed.Remove(key);
+                // Keep consuming repeats after recording ends (especially a held Esc),
+                // until the corresponding key-up. Otherwise a repeat could close settings.
+                if (!up && suppressed.Contains(key)) return (IntPtr)1;
                 bool enabled = target != SettingsWindow && !Excluded(target);
                 bool tap = false;
                 if (up) tap = taps.Up(key, clock.ElapsedMilliseconds, Settings.TapMilliseconds);

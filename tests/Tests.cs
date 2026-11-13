@@ -35,11 +35,11 @@ namespace LSwitcher
             {
                 Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
                 Application.EnableVisualStyles();
-                Run(TestSingleInstance); Run(TestTaps); Run(TestValidation); Run(TestStorage); Run(TestConversion); Run(TestCase); Run(TestRichText); Run(TestLayouts); Run(TestPauseAndCapture); Run(TestColors);
+                Run(TestSingleInstance); Run(TestShortcutRecording); Run(TestTrayStatuses); Run(TestTaps); Run(TestValidation); Run(TestStorage); Run(TestConversion); Run(TestCase); Run(TestRichText); Run(TestLayouts); Run(TestPauseAndCapture); Run(TestColors);
                 // Run COM checks before Application.Run tears down a WinForms synchronization context.
                 if (args.Contains("--word-smoke")) Run(TestWord);
                 if (args.Contains("--clipboard-smoke")) Run(TestClipboard);
-                if (args.Contains("--ui-smoke")) { Run(TestSettingsWindow); Run(TestTrayLifecycle); Run(TestInstanceTrayShutdown); }
+                if (args.Contains("--ui-smoke")) { Run(TestSettingsWindow); Run(TestTrayLifecycle); Run(TestInstanceTrayShutdown); Run(TestSettingsImprovements); }
                 if (args.Contains("--dpi-smoke")) Run(TestDpi);
                 Console.WriteLine("PASS: " + assertions + " assertions"); return 0;
             }
@@ -158,9 +158,9 @@ namespace LSwitcher
                 using (var form = new SettingsForm(settings, engine, value => { throw new Exception("Capture test must not save"); }))
                 {
                     var field = (ShortcutBox)form.Controls.Find("ShortcutTest", true).Single(); var feedback = (Label)form.Controls.Find("ShortcutTestFeedback", true).Single();
-                    field.CaptureKey((int)Keys.F23, false); field.CaptureKey((int)Keys.F23, true);
+                    field.BeginRecording(); field.CaptureKey((int)Keys.F23, false); field.CaptureKey((int)Keys.F23, true);
                     Check(feedback.Text.Contains("Short tap") && feedback.Text.Contains("Pause / Resume"), "Shortcut test identifies tap and assignment"); Equal(2, pauses, "Shortcut test never executes assigned action");
-                    field.CaptureKey(0xa2, false); System.Threading.Thread.Sleep(350); field.CaptureKey(0xa2, true);
+                    field.BeginRecording(); field.CaptureKey(0xa2, false); System.Threading.Thread.Sleep(350); field.CaptureKey(0xa2, true);
                     Check(feedback.Text.Contains("Hold") && feedback.Text.Contains("LControlKey"), "Shortcut test detects a standalone modifier hold");
                 }
             }
