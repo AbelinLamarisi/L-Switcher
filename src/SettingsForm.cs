@@ -99,6 +99,7 @@ namespace LSwitcher
         private ShortcutBox pauseShortcut, uppercase, lowercase, invertCase;
         private NumericUpDown tap;
         private CheckBox startup;
+        private CheckBox deselectAfterConversion;
         private readonly ListBox exclusions = new ListBox { Dock = DockStyle.Fill, HorizontalScrollbar = true };
         internal SettingsForm(Settings settings, HotkeyEngine engine, Action<Settings> save, Action<string, string> showMessage = null)
         {
@@ -133,6 +134,8 @@ namespace LSwitcher
             layoutGroup.Controls.Add(FieldRow("Direction", direction));
             conversion = AssignmentBox(draft.ConversionShortcut, "ConversionShortcut");
             layoutGroup.Controls.Add(NamedShortcutRow("Shortcut", conversion));
+            deselectAfterConversion = new CheckBox { Name = "DeselectAfterConversion", Text = "Deselect text after conversion", AutoSize = true, Checked = draft.DeselectAfterLayoutConversion, Margin = new Padding(3, 8, 3, 3) };
+            deselectAfterConversion.CheckedChanged += (s, e) => RefreshDraft(); layoutGroup.Controls.Add(deselectAfterConversion);
             detectionHint = new Label { Name = "WordDetectionHint", AutoSize = false, Width = 660, Height = 58, Margin = new Padding(3, 10, 3, 3), ForeColor = SystemColors.GrayText, Text = "Swap both ways identifies each word’s layout; punctuation follows the preceding word. Ambiguous words follow the preceding direction (first layout initially)." }; layoutGroup.Controls.Add(detectionHint);
             first.SelectedIndexChanged += (s, e) => UpdateDirections(); second.SelectedIndexChanged += (s, e) => UpdateDirections();
             direction.SelectedIndexChanged += (s, e) => detectionHint.Visible = direction.SelectedIndex == 0; UpdateDirections();
@@ -310,6 +313,7 @@ namespace LSwitcher
             result.Bindings = rows.Select(r => new LayoutBinding { LayoutId = (r.Item1.SelectedItem as KeyboardLayout)?.Id, Shortcut = r.Item2.Value }).ToList();
             result.FirstLayout = (first.SelectedItem as KeyboardLayout)?.Id; result.SecondLayout = (second.SelectedItem as KeyboardLayout)?.Id;
             result.ConversionShortcut = conversion.Value; result.Direction = (ConversionDirection)direction.SelectedIndex;
+            result.DeselectAfterLayoutConversion = deselectAfterConversion.Checked;
             result.PauseShortcut = pauseShortcut.Value; result.UppercaseShortcut = uppercase.Value; result.LowercaseShortcut = lowercase.Value; result.InvertCaseShortcut = invertCase.Value;
             result.TapMilliseconds = (int)tap.Value; result.StartWithWindows = startup.Checked; result.Exclusions = exclusions.Items.Cast<Exclusion>().ToList();
             return result;

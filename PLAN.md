@@ -43,7 +43,7 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 - Preserve case, spaces, and line breaks. Convert punctuation according to physical key positions. Leave characters outside the configured pair unchanged.
 - Temporary clipboard use with restoration of its contents is allowed if that implementation approach is selected.
 - Preserve internal text formatting where possible, including in the prototype. If formatting cannot be preserved, still convert using plain text with formatting loss. This supersedes the earlier prohibition on plain-text fallback.
-- Keep the converted text selected.
+- Keep converted text selected by default. The `Keyboard layout conversion` group includes `Deselect text after conversion`, disabled by default; when enabled, collapse the selection to the end after layout conversion. This option does not affect selection case commands. Accepted on 2026-11-14.
 - With no selection, the conversion command does nothing.
 - Do nothing for read-only selections.
 - Include selection case conversion in the prototype: uppercase, lowercase, and invert case, each with a user-assignable hotkey. Approved during the interactive feature review.
@@ -140,6 +140,7 @@ Validation on 2026-11-13: Release x64 build and 967 core/UI/DPI assertions passe
 
 ### Prototype implementation (2026-11-10)
 
+- On 2026-11-14, added the persisted `Deselect text after conversion` option in the keyboard-layout conversion group, disabled by default and independent of case commands. Word and clipboard/UIA paths collapse to the converted text end, including unchanged editable text; empty/read-only selections remain untouched. Release build, 973 core/UI/DPI assertions and the 163-assertion local Word/clipboard suite passed.
 - Implemented the .NET Framework 4.8 x64 project, settings UI, tray, single-instance activation, keyboard/mouse hooks, direct layout activation, exclusions, startup control, and JSON recovery/backup.
 - On 2026-11-13, replaced open-existing behavior with unconditional graceful handover on every new launch. Startup is serialized; hooks/tray/windows and in-flight conversions finish before the instance lock is released. A 10-second timeout reports failure without starting a second instance. Legacy UI-loop shutdown is supported for identifiable pre-protocol builds. Cross-process tests cover cleanup ordering, concurrent launches, timeout without forced termination, legacy handover, and tray/settings shutdown. Release build and 870 core/UI/DPI assertions passed locally.
 - Implemented physical-key conversion, word-context punctuation, native Word character edits, and a guarded clipboard/UI Automation path with RTF/plain-text support.

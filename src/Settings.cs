@@ -56,6 +56,7 @@ namespace LSwitcher
         [DataMember] public Shortcut InvertCaseShortcut { get; set; } = new Shortcut();
         [DataMember] public List<LayoutLabelColor> LabelColors { get; set; } = new List<LayoutLabelColor>();
         [DataMember] public ConversionDirection Direction { get; set; }
+        [DataMember] public bool DeselectAfterLayoutConversion { get; set; }
         [OnDeserialized] private void UpgradeOptionalFields(StreamingContext context)
         {
             PauseShortcut = PauseShortcut ?? new Shortcut(); UppercaseShortcut = UppercaseShortcut ?? new Shortcut();

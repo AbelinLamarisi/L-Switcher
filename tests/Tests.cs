@@ -85,6 +85,8 @@ namespace LSwitcher
                 File.WriteAllText(store.FilePath, "{\"SchemaVersion\":1,\"TapMilliseconds\":300,\"Bindings\":[],\"Exclusions\":[],\"ConversionShortcut\":{\"Key\":0,\"Modifiers\":0},\"Direction\":0}");
                 var upgraded = new SettingsStore(store.FilePath).Load(); Equal(0, upgraded.PauseShortcut.Key, "Old schema-one settings gain an unassigned pause shortcut"); Equal(0, upgraded.UppercaseShortcut.Key, "Old settings gain unassigned case shortcuts");
                 Equal(0, upgraded.LabelColors.Count, "Old settings use default tray colors");
+                Check(!upgraded.DeselectAfterLayoutConversion, "Old settings retain converted selection by default");
+                Check(new Settings { DeselectAfterLayoutConversion = true }.Clone().DeselectAfterLayoutConversion, "Deselect preference survives JSON serialization");
             }
             finally { foreach (string path in Directory.GetFiles(dir)) File.Delete(path); Directory.Delete(dir); }
         }
@@ -229,11 +231,19 @@ namespace LSwitcher
                 task = SelectionConversion.TransformWord(window, text => CaseConverter.Convert(text, CaseMode.Uppercase));
                 while (!task.IsCompleted) { Application.DoEvents(); System.Threading.Thread.Sleep(1); }
                 Check(task.GetAwaiter().GetResult(), "Word case selection path"); Equal("РУДДЩЮ GHBDTN/\rЦЩКДВ", ((string)app.Selection.Text).TrimEnd('\r'), "Word uppercase conversion"); Equal(-1, (int)doc.Range(0, 5).Font.Bold, "Word case conversion retains bold");
+                string expected = Converter().Convert((string)app.Selection.Text, ConversionDirection.FirstToSecond);
+                task = SelectionConversion.TryWord(window, Converter(), ConversionDirection.FirstToSecond, true);
+                while (!task.IsCompleted) { Application.DoEvents(); System.Threading.Thread.Sleep(1); }
+                Check(task.GetAwaiter().GetResult(), "Word optional deselection handled"); Equal(expected, (string)doc.Range(0, 20).Text, "Word deselection retains converted text");
+                Equal(20, (int)app.Selection.Start, "Word caret placed at converted text end"); Equal(20, (int)app.Selection.End, "Word selection is collapsed"); Equal(-1, (int)doc.Range(0, 5).Font.Bold, "Deselect option preserves Word formatting");
+                app.Selection.SetRange(0, 20); task = SelectionConversion.TransformWord(window, text => text, true);
+                while (!task.IsCompleted) { Application.DoEvents(); System.Threading.Thread.Sleep(1); }
+                Check(task.GetAwaiter().GetResult() && (int)app.Selection.Start == 20, "Word unchanged text also honors deselection");
                 app.Selection.SetRange(0, 0); task = SelectionConversion.TryWord(window, Converter(), ConversionDirection.SwapBothWays);
                 while (!task.IsCompleted) { Application.DoEvents(); System.Threading.Thread.Sleep(1); }
                 Check(task.GetAwaiter().GetResult(), "Word empty selection no-op"); Equal(0, (int)app.Selection.End, "Empty selection remains empty");
                 doc.Protect(3); app.Selection.SetRange(0, 20); string protectedText = app.Selection.Text;
-                task = SelectionConversion.TryWord(window, Converter(), ConversionDirection.SwapBothWays);
+                task = SelectionConversion.TryWord(window, Converter(), ConversionDirection.SwapBothWays, true);
                 while (!task.IsCompleted) { Application.DoEvents(); System.Threading.Thread.Sleep(1); }
                 Check(task.GetAwaiter().GetResult(), "Word protected selection handled"); Equal(protectedText, (string)app.Selection.Text, "Read-only Word selection unchanged");
             }
@@ -278,9 +288,20 @@ namespace LSwitcher
                         for (int i = 0; i < 100 && rich.Text != "РУДДЩЮ GHBDTN/"; i++) await Task.Delay(30);
                         await Task.Delay(300);
                         Equal("РУДДЩЮ GHBDTN/", rich.Text, "Case conversion uses editable selection without layout pair"); Equal(rich.Text, rich.SelectedText, "Case conversion keeps selection"); Equal("L-Switcher clipboard test", Clipboard.GetText(), "Case conversion restores clipboard");
+                        var map = new TextConverter(Layouts.BuildMap(en.Handle, ru.Handle), Layouts.BuildMap(ru.Handle, en.Handle));
+                        string expected = map.Convert(rich.Text, ConversionDirection.FirstToSecond);
+                        var deselect = new Settings { FirstLayout = en.Id, SecondLayout = ru.Id, Direction = ConversionDirection.FirstToSecond, DeselectAfterLayoutConversion = true };
+                        service.Run(form.Handle, deselect); for (int i = 0; i < 150 && service.IsBusy; i++) await Task.Delay(20);
+                        Equal(expected, rich.Text, "Deselect option converts clipboard text"); Check(rich.SelectionLength == 0 && rich.SelectionStart == rich.TextLength, "Deselect option places clipboard caret at text end"); Equal("L-Switcher clipboard test", Clipboard.GetText(), "Deselect option restores clipboard");
+                        rich.SelectAll(); service.RunCase(form.Handle, CaseMode.Lowercase); for (int i = 0; i < 150 && service.IsBusy; i++) await Task.Delay(20);
+                        Equal(rich.Text, rich.SelectedText, "Layout deselection preference does not leak into case conversion");
+                        rich.Text = "123 😀"; rich.SelectAll(); service.Run(form.Handle, deselect); for (int i = 0; i < 150 && service.IsBusy; i++) await Task.Delay(20);
+                        Equal("123 😀", rich.Text, "Unchanged clipboard text is retained"); Check(rich.SelectionLength == 0 && rich.SelectionStart == rich.TextLength, "Unchanged clipboard text also honors deselection");
+                        rich.Text = "HELLO ПРИВЕТ"; rich.SelectAll();
                         rich.ReadOnly = true; string beforeReadOnly = rich.Text;
                         service.RunCase(form.Handle, CaseMode.Lowercase); await Task.Delay(200);
                         Equal(beforeReadOnly, rich.Text, "Read-only control is unchanged");
+                        service.Run(form.Handle, deselect); await Task.Delay(200); Equal(beforeReadOnly, rich.SelectedText, "Deselect option leaves read-only selections alone");
                     }
                     catch (Exception ex) { failure = ex.ToString(); }
                     finally { form.Close(); }

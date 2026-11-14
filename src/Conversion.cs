@@ -35,16 +35,17 @@ namespace LSwitcher
                     var converter = new TextConverter(Layouts.BuildMap(first.Handle, second.Handle), Layouts.BuildMap(second.Handle, first.Handle));
                     transform = text => converter.Convert(text, settings.Direction);
                 }
-                if (await TransformWord(target, transform)) return;
-                await ClipboardConvert(target, transform);
+                bool deselect = !caseMode.HasValue && settings.DeselectAfterLayoutConversion;
+                if (await TransformWord(target, transform, deselect)) return;
+                await ClipboardConvert(target, transform, deselect);
             }
             catch (Exception ex) { Notice?.Invoke("Conversion stopped: " + ex.Message); }
             finally { busy = false; }
         }
         private static bool ModifiersDown() { return new[] { 0x10, 0x11, 0x12, 0x5b, 0x5c }.Any(k => (Native.GetAsyncKeyState(k) & 0x8000) != 0); }
 
-        internal static Task<bool> TryWord(IntPtr window, TextConverter converter, ConversionDirection direction) { return TransformWord(window, text => converter.Convert(text, direction)); }
-        internal static async Task<bool> TransformWord(IntPtr window, Func<string, string> transform)
+        internal static Task<bool> TryWord(IntPtr window, TextConverter converter, ConversionDirection direction, bool deselect = false) { return TransformWord(window, text => converter.Convert(text, direction), deselect); }
+        internal static async Task<bool> TransformWord(IntPtr window, Func<string, string> transform, bool deselect = false)
         {
             IntPtr document = IntPtr.Zero;
             Native.EnumChildWindows(window, (child, unused) => { var name = new StringBuilder(128); Native.GetClassName(child, name, name.Capacity); if (name.ToString() == "_WwG") document = child; return true; }, IntPtr.Zero);
@@ -65,7 +66,7 @@ namespace LSwitcher
                 string converted = transform(original);
                 if (converted.Length != original.Length) throw new InvalidOperationException("This conversion changes text length and cannot preserve character positions.");
                 int start = range.Start, end = range.End;
-                if (original == converted) return true;
+                if (original == converted) { if (deselect) selection.SetRange(end, end); return true; }
                 try { undoObject = app.UndoRecord; dynamic undo = undoObject; undo.StartCustomRecord("Convert keyboard layout"); recording = true; } catch (COMException) { } catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) { }
                 // Edit changed characters from the end. Each Word range retains its own formatting.
                 for (int i = original.Length - 1; i >= 0; i--)
@@ -83,7 +84,7 @@ namespace LSwitcher
                         if ((int)selection.Start != expectedStart || (int)selection.End != expectedEnd || (string)range.Text != expectedText) throw new InvalidOperationException("The selection changed during conversion.");
                     }
                 }
-                selection.SetRange(start, end); return true;
+                selection.SetRange(deselect ? end : start, end); return true;
             }
             finally
             {
@@ -93,7 +94,7 @@ namespace LSwitcher
         }
         private static void Release(object value) { if (value != null && Marshal.IsComObject(value)) Marshal.ReleaseComObject(value); }
 
-        private async Task ClipboardConvert(IntPtr window, Func<string, string> transform)
+        private async Task ClipboardConvert(IntPtr window, Func<string, string> transform, bool deselect)
         {
             var focused = AutomationElement.FocusedElement;
             object patternObject;
@@ -119,7 +120,14 @@ namespace LSwitcher
                 string copied = Clipboard.GetText();
                 if (Normalize(copied) != Normalize(selected)) return;
                 ownedSequence = copiedSequence; clipboardOwned = true;
-                string converted = transform(copied); if (converted == copied) return;
+                string converted = transform(copied);
+                if (converted == copied)
+                {
+                    var unchanged = pattern.GetSelection();
+                    if (deselect && window == Native.GetForegroundWindow() && unchanged.Length == 1 && unchanged[0].GetText(-1) == selected)
+                    { unchanged[0].MoveEndpointByRange(TextPatternRangeEndpoint.Start, unchanged[0], TextPatternRangeEndpoint.End); unchanged[0].Select(); }
+                    return;
+                }
                 string rtf = Clipboard.ContainsData(DataFormats.Rtf) ? Clipboard.GetData(DataFormats.Rtf) as string : null;
                 var data = new DataObject(); data.SetText(converted, TextDataFormat.UnicodeText);
                 if (!string.IsNullOrEmpty(rtf))
@@ -139,7 +147,11 @@ namespace LSwitcher
                 {
                     var range = ranges[0]; range.MoveEndpointByRange(TextPatternRangeEndpoint.Start, range, TextPatternRangeEndpoint.End);
                     range.MoveEndpointByUnit(TextPatternRangeEndpoint.Start, TextUnit.Character, -TextUnits(converted));
-                    if (Normalize(range.GetText(-1)) == Normalize(converted)) range.Select();
+                    if (Normalize(range.GetText(-1)) == Normalize(converted))
+                    {
+                        if (deselect) range.MoveEndpointByRange(TextPatternRangeEndpoint.Start, range, TextPatternRangeEndpoint.End);
+                        range.Select();
+                    }
                 }
             }
             finally
