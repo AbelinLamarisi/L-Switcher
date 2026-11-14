@@ -1,6 +1,9 @@
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $source = [Drawing.Image]::FromFile((Join-Path $PSScriptRoot 'app-icon.png'))
+# Square crop around the approved artwork (solid bounds: 104,83 to 1113,1163).
+# Keep the original master and silhouette; reduce padding to about 1% vertically.
+$sourceArea = New-Object Drawing.RectangleF 56, 71, 1104, 1104
 $sizes = @(16, 20, 24, 32, 40, 48, 64, 96, 128, 256)
 $frames = @()
 try {
@@ -13,7 +16,7 @@ try {
             $graphics.CompositingMode = [Drawing.Drawing2D.CompositingMode]::SourceCopy
             $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
             $graphics.PixelOffsetMode = [Drawing.Drawing2D.PixelOffsetMode]::HighQuality
-            $graphics.DrawImage($source, (New-Object Drawing.Rectangle 0, 0, $size, $size))
+            $graphics.DrawImage($source, (New-Object Drawing.RectangleF 0, 0, $size, $size), $sourceArea, [Drawing.GraphicsUnit]::Pixel)
             $bitmap.Save($stream, [Drawing.Imaging.ImageFormat]::Png)
             $bytes = $stream.ToArray()
             [IO.File]::WriteAllBytes((Join-Path $PSScriptRoot "app-icon-$size.png"), $bytes)
