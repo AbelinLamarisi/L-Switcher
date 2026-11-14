@@ -22,5 +22,9 @@
     <Compile Include="src\SettingsForm.cs"/><Compile Include="src\TrayApplication.cs"/><Compile Include="src\TrayPresentation.cs"/><Compile Include="src\DpiForm.cs"/>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+  <Target Name="GenerateBuildVersion" BeforeTargets="BeforeCompile">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)" Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\tools\Write-BuildVersion.ps1&quot; -RepositoryRoot &quot;$(MSBuildProjectDirectory)&quot; -OutputPath &quot;$(IntermediateOutputPath)BuildVersion.g.cs&quot;" />
+    <ItemGroup><Compile Include="$(IntermediateOutputPath)BuildVersion.g.cs" /></ItemGroup>
+  </Target>
   <ItemGroup><EmbeddedResource Include="assets\app.ico"><LogicalName>LSwitcher.AppIcon</LogicalName></EmbeddedResource></ItemGroup>
 </Project>

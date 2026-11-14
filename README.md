@@ -13,6 +13,8 @@ Install Visual Studio Build Tools 2022 with the components in `.vsconfig` (alrea
 
 The release executable is standalone; copy `L-Switcher.exe` to a permanent folder before enabling startup.
 
+Build versions are embedded in the executable: local builds always use the full Git commit hash and never query GitHub. In GitHub Actions, a published-release build uses the exact release tag; other events use the commit hash. This metadata also appears as the executable's Product version. Identifying a running build requires no runtime network or Git access.
+
 ## GitHub Actions
 
 The [Windows build and tests workflow](https://github.com/AbelinLamarisi/L-Switcher/actions/workflows/build.yml) runs on pushes to `main`, `v*` tags, pull requests, and manual dispatch. Documentation-only changes (Markdown, `docs/`, license files, or `.gitignore`) skip automatic branch/PR runs. Feature-branch pushes are checked through their PR, avoiding duplicate push/PR builds. Version tags always run.
@@ -41,7 +43,7 @@ Artifacts require access to this private repository. Word and clipboard integrat
 - Settings and the exclusion editor support per-monitor DPI changes. Buttons and rows size to their contents; large windows fit the monitor work area and tab contents can scroll. DPI handling is embedded in the executable; no extra `.exe.config` is required.
 - **Apply** is enabled only when settings differ from the last successfully applied draft; reverting an edit or saving disables it again. **OK** saves and closes, including unchanged defaults on first launch. **Cancel** or the close button discards unapplied changes. Exclusion **Remove** requires a selected entry. The fixed-size settings window retains per-monitor DPI scaling.
 - The tray uses orange pause bars for manual pause and a separate red cross badge for an excluded application. Both marks and both tooltip explanations appear when the two states coincide.
-- Click the tray label for settings; right-click for pause/resume or exit. Pause resets on restart. Every new launch gracefully replaces the running instance, regardless of version: wait for its conversions/clipboard restoration and resource cleanup, then start the launched executable. Saved settings are retained; unapplied edits are discarded. If shutdown fails within 10 seconds, the new launch reports an error without starting a second instance or terminating the running process.
+- Click the tray label for settings; right-click for pause/resume or exit. Pause resets on restart. Launching the same build opens settings in the existing process and keeps its current state. A different build gracefully replaces the running instance after conversion/clipboard restoration and cleanup; versions are compared for equality, not ordered. Saved settings are retained; replacement discards unapplied edits. If shutdown fails within 10 seconds, the new launch reports an error without starting a second instance or terminating the running process. Builds without the new identifier protocol are replaced once.
 
 Settings are stored in `%LOCALAPPDATA%\L-Switcher\settings.json`, with atomic replacement and a `.bak` backup of the previous valid configuration. Corrupt configuration triggers recovery with a warning. Removed layouts retain their bindings and appear as `Layout unavailable`; unavailable actions are disabled.
 

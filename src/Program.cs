@@ -15,7 +15,7 @@ namespace LSwitcher
                 using (var instance = new SingleInstance(@"Local\L-Switcher-" + user))
                 using (var activate = new EventWaitHandle(false, EventResetMode.AutoReset, @"Local\L-Switcher-Open-" + user))
                 {
-                    instance.Acquire(LegacyInstance.RequestShutdown);
+                    if (!instance.Acquire(LegacyInstance.RequestShutdown, buildIdentity: BuildVersion.Identity, activateExisting: () => activate.Set())) return;
                     using (var context = new TrayApplication(activate, shutdownRequested: () => instance.ShutdownRequested))
                     {
                         instance.Ready();

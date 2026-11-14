@@ -9,6 +9,7 @@ try {
     & $msbuild LSwitcher.csproj /t:Rebuild /p:Configuration=Release /p:Platform=x64 /m /v:minimal
     if ($LASTEXITCODE -ne 0) { throw 'Application build failed.' }
     if ($Test -or $UISmoke -or $WordSmoke -or $ClipboardSmoke -or $DpiSmoke) {
+        & (Join-Path $PSScriptRoot 'tests\BuildVersion.Tests.ps1')
         & $msbuild tests\LSwitcher.Tests.csproj /t:Rebuild /p:Configuration=Release /p:Platform=x64 /m /v:minimal
         if ($LASTEXITCODE -ne 0) { throw 'Test build failed.' }
         $testArguments = @()

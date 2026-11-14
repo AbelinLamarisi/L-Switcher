@@ -1,6 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.IO.MemoryMappedFiles;
+using System.Text;
 using System.Security.Principal;
 using System.Threading;
 
@@ -12,6 +14,8 @@ namespace LSwitcher
         private readonly Mutex instance, launch;
         private readonly EventWaitHandle shutdown;
         private readonly bool newShutdown;
+        private readonly MemoryMappedFile versionMap;
+        private readonly MemoryMappedViewAccessor versionView;
         private bool ownsInstance, ownsLaunch;
         internal SingleInstance(string name)
         {
@@ -20,6 +24,8 @@ namespace LSwitcher
                 instance = new Mutex(false, name);
                 launch = new Mutex(false, name + "-Launch");
                 shutdown = new EventWaitHandle(false, EventResetMode.AutoReset, name + "-Shutdown", out newShutdown);
+                versionMap = MemoryMappedFile.CreateOrOpen(name + "-BuildIdentity", 4096);
+                versionView = versionMap.CreateViewAccessor();
             }
             catch { Dispose(); throw; }
         }
@@ -27,7 +33,7 @@ namespace LSwitcher
         {
             try { return mutex.WaitOne(milliseconds); } catch (AbandonedMutexException) { return true; }
         }
-        internal void Acquire(Action requestLegacyShutdown = null, int timeoutMilliseconds = 10000)
+        internal bool Acquire(Action requestLegacyShutdown = null, int timeoutMilliseconds = 10000, string buildIdentity = null, Action activateExisting = null)
         {
             if (ownsInstance || ownsLaunch) throw new InvalidOperationException("This launch already owns the instance lock.");
             var elapsed = Stopwatch.StartNew();
@@ -38,15 +44,38 @@ namespace LSwitcher
                 ownsInstance = Take(instance, 0);
                 if (!ownsInstance)
                 {
+                    if (!string.IsNullOrEmpty(buildIdentity) && string.Equals(ReadIdentity(), buildIdentity, StringComparison.Ordinal))
+                    {
+                        // Recheck ownership in case the existing instance exited during inspection.
+                        ownsInstance = Take(instance, 0);
+                        if (!ownsInstance) { activateExisting?.Invoke(); Ready(); return false; }
+                    }
+                }
+                if (!ownsInstance)
+                {
                     // Old builds predate the shutdown event; keep a graceful migration path.
                     if (newShutdown && requestLegacyShutdown != null) requestLegacyShutdown();
                     else shutdown.Set();
                     ownsInstance = Take(instance, Math.Max(0, timeoutMilliseconds - (int)elapsed.ElapsedMilliseconds));
                     if (!ownsInstance) throw new TimeoutException("The running L-Switcher instance did not exit in time. No second instance was started. Close it through the tray and try again.");
                 }
+                WriteIdentity(buildIdentity);
                 shutdown.Reset();
+                return true;
             }
             catch { Ready(); throw; }
+        }
+        private string ReadIdentity()
+        {
+            int length = versionView.ReadInt32(0);
+            if (length <= 0 || length > 4092) return null;
+            var bytes = new byte[length]; versionView.ReadArray(4, bytes, 0, length); return Encoding.UTF8.GetString(bytes);
+        }
+        private void WriteIdentity(string value)
+        {
+            var bytes = Encoding.UTF8.GetBytes(value ?? "");
+            if (bytes.Length > 4092) throw new InvalidOperationException("The build identifier is too long.");
+            versionView.Write(0, 0); versionView.WriteArray(4, bytes, 0, bytes.Length); versionView.Write(0, bytes.Length);
         }
         // Serialize handover through startup, not just through acquisition of the lock.
         internal void Ready() { if (ownsLaunch) { launch.ReleaseMutex(); ownsLaunch = false; } }
@@ -54,7 +83,8 @@ namespace LSwitcher
         public void Dispose()
         {
             Ready();
-            if (ownsInstance) { instance.ReleaseMutex(); ownsInstance = false; }
+            if (ownsInstance) { versionView.Write(0, 0); instance.ReleaseMutex(); ownsInstance = false; }
+            versionView?.Dispose(); versionMap?.Dispose();
             shutdown?.Dispose(); launch?.Dispose(); instance?.Dispose();
         }
     }
