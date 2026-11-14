@@ -8,6 +8,7 @@
     <OutputPath>bin\$(Configuration)\</OutputPath><DebugType>portable</DebugType>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>assets\app.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Release'"><Optimize>true</Optimize></PropertyGroup>
   <ItemGroup>
@@ -21,4 +22,5 @@
     <Compile Include="src\SettingsForm.cs"/><Compile Include="src\TrayApplication.cs"/><Compile Include="src\TrayPresentation.cs"/><Compile Include="src\DpiForm.cs"/>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+  <ItemGroup><EmbeddedResource Include="assets\app.ico"><LogicalName>LSwitcher.AppIcon</LogicalName></EmbeddedResource></ItemGroup>
 </Project>

@@ -21,12 +21,16 @@ namespace LSwitcher
         private int currentDpi = 96;
         private bool initialized, scaling;
         private Font dpiFont;
+        private readonly Icon applicationIcon;
         private readonly Font logicalFont = CreateFont(96);
         private Size logicalMinimum;
         internal int LayoutDpi { get { return currentDpi; } }
 
         internal DpiForm()
         {
+            using (var stream = typeof(DpiForm).Assembly.GetManifestResourceStream("LSwitcher.AppIcon"))
+                applicationIcon = new Icon(stream);
+            Icon = applicationIcon;
             AutoScaleMode = AutoScaleMode.None;
             dpiFont = CreateFont(96); Font = dpiFont;
         }
@@ -108,6 +112,6 @@ namespace LSwitcher
             }
             base.WndProc(ref m);
         }
-        protected override void Dispose(bool disposing) { base.Dispose(disposing); if (disposing) { dpiFont?.Dispose(); dpiFont = null; logicalFont.Dispose(); logical.Clear(); } }
+        protected override void Dispose(bool disposing) { base.Dispose(disposing); if (disposing) { applicationIcon.Dispose(); dpiFont?.Dispose(); dpiFont = null; logicalFont.Dispose(); logical.Clear(); } }
     }
 }

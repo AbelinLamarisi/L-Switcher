@@ -61,6 +61,8 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 
 ## Accepted settings and tray UI
 
+- Application icon selected on 2026-11-14: tilted violet/coral S-shaped exchange ribbon with a large white L, without outlines (variant 1 of the final comparison). Embed a multi-resolution ICO in the EXE and application windows; retain the active-layout/status indicator in the tray. Implemented with transparent PNG exports and ten ICO sizes from 16 to 256 px.
+
 - Use tabs: `Layouts`, `Conversion`, `Exclusions`, and `General`.
 - The `Exclusions` tab contains a list with `Add` and `Remove` buttons and a choice of matching by executable name or full executable path.
 - Users add layout-binding rows with an `Add` button; do not prepopulate bindings.
