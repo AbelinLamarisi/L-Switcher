@@ -11,7 +11,7 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 - Primarily for personal use, with public open-source distribution planned.
 - Repository name: L-Switcher.
 - The default branch is `master` (renamed from `main` on 2026-11-17).
-- Keep the GitHub repository private for now. Future open-source distribution remains planned.
+- Repository made public on 2026-11-17 at the user's explicit request. Public GitHub Releases are the update source; clients need no GitHub credentials.
 - Target Windows 11 and later; ARM support is out of scope.
 - Minimal UI: system tray icon(s) and a settings window.
 - Support different display DPI/scale factors, including live transitions between monitors; text and buttons must not be clipped.
@@ -52,11 +52,11 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 - Distribution must not require users to install dependencies: a standalone executable.
 - Local builds use one stable executable path, `bin/Release/L-Switcher.exe`, rather than per-commit folders under `bin/Builds` (accepted on 2026-11-17). Compile/test in `artifacts` before publishing, preserve the working application on failure, and retain only still-locked rollback images in the ignored artifacts directory. Building does not itself restart the application.
 - Accepted on 2026-11-17, superseding the earlier artifact-only interpretation: publish tested EXEs in GitHub Releases. Each explicit `v*` tag creates its own version release and retains its binary. Successful master builds update one floating `master` tag and prerelease with only the latest EXE; do not accumulate development releases. PR builds do not publish. Existing version release binaries are not overwritten on reruns.
-- Accepted on 2026-11-17: master has only one retained executable artifact, replaced after each successful build and upload. Failed builds retain the previous working artifact. Cleanup must preserve tag/release artifacts and diagnostics. Main's latest executable expires after 90 days without a replacement; tag artifacts retain their separate expiration policy.
+- Accepted on 2026-11-17: master has only one retained executable artifact, replaced after each successful build and upload. Failed builds retain the previous working artifact. Cleanup must preserve tag/release artifacts and diagnostics. Master's latest executable expires after 90 days without a replacement; tag artifacts retain their separate expiration policy.
 - Installing the development toolchain on this machine should be straightforward.
 - Technology stack: C# + Windows Forms targeting .NET Framework 4.8, with Windows API interop where needed.
 - Do not bundle the runtime. Use the Windows-provided .NET Framework on Windows 11 and later; no separate modern .NET Desktop Runtime prerequisite.
-- Plan new-version checking, but defer enabling it until a public update metadata source is available. Until then, update test builds manually. Once enabled, notify the user when an update is available; downloading and replacing the executable remain manual. Do not add private-source authentication or embed GitHub credentials in the executable. No public update source has been authorized for creation yet.
+- Update design accepted on 2026-11-17 supersedes manual-install-only and private-source deferral: use the latest stable version release in this now-public repository. Ignore rolling master and prereleases as update targets. Master builds must also be offered a stable update when its tag is newer; the precise comparison rule remains under discussion. Never embed GitHub credentials in the executable.
 - In bidirectional conversion, convert mixed selections word by word. Resolve ambiguous punctuation from the preceding word's source layout (user clarification on 2026-11-10).
 - Word formatting acceptance starts with bold, italic, color, and multiple paragraphs (accepted on 2026-11-10).
 
@@ -126,8 +126,10 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 
 ### UI and distribution
 
-- Future update-check UI is agreed: `Check for updates` plus `Automatically check for updates`, disabled by default. When enabled, check on startup if due and subsequently no more than once per day. Background checks notify only when a new version is available; no-update results and temporary source failures remain silent. Manual checks always report their result. Installation remains manual. Activation still waits for a public metadata source; choose hosting then.
-- MIT selected for the future open-source release. The repository remains private. Add the license file and confirm copyright-holder details separately before distribution.
+- Accepted update controls: `Check for updates` and `Automatically check for updates`, enabled by default (superseding the earlier disabled default). Check on startup if at least 24 hours have elapsed, then no more than once per 24 hours while running. Background checks remain silent when no update is available or a temporary error occurs; manual checks report their result.
+- Update offers include a persistent `Never offer updates` choice. Add a separate setting allowing automatic silent installation of a newer stable release, without asking. Proposed default for silent installation is off; this default and the interaction of `Never offer updates` with silent installation remain design details to confirm.
+- Source availability is resolved: the repository and its releases are public. These are agreed update requirements from the ongoing brainstorm, not a claim that runtime checking or installation has already been implemented.
+- MIT is selected. The repository is now public at the user's request; the license file and copyright-holder details remain to be finalized.
 - No hard numerical resource or executable-size limits for now. First measure executable size, memory, and CPU usage while idle in the tray, with settings open, and after repeated conversions. Avoid perceptible input delays, minimize idle CPU use, and investigate sustained memory growth. Decide optimization targets from measurements.
 
 ## Next steps
@@ -162,4 +164,4 @@ Validation on 2026-11-13: Release x64 build and 967 core/UI/DPI assertions passe
 - Verified native Word conversion with bold/italic/color, paragraphs, selection retention, unchanged active layout, and protected/empty selections. Verified the clipboard/UIA path on a temporary editable RichTextBox, including RTF formatting, selection retention, read-only behavior, and restoration of text/custom clipboard formats. These checks do not replace application-specific acceptance in VS Code and Chrome.
 - Verify the prototype in VS Code, Chrome, and Word; distinguish automated checks from manual compatibility acceptance in the completion report.
 - Review shared-alphabet defaults and complex rich-text behavior after use.
-- Update checking activation is deferred until a public metadata source exists; its future check timing and UI are agreed. Licensing and advanced compatibility decisions can wait.
+- Implement update checking and installation using the now-public stable releases after the remaining brainstorm details are settled. The previous public-source blocker is resolved.
