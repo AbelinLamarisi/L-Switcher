@@ -15,7 +15,7 @@ The release executable is standalone; copy `L-Switcher.exe` to a permanent folde
 
 The local executable always lives at **`C:\Projects\LSwitcher\bin\Release\L-Switcher.exe`** (or `bin/Release/L-Switcher.exe` in another checkout). `build.ps1` compiles into the fixed `artifacts/build/Release` cache and publishes to that address after requested checks pass. Running binaries can be moved aside into `artifacts/previous-builds` while their mapped image finishes; unlocked backups are cleaned on subsequent publications. Building does not restart the application or discard settings edits. If another program prevents replacement, publishing fails while retaining the previous executable. Future builds do not create per-commit folders under `bin/Builds`.
 
-Build versions are embedded in the executable: local builds always use the full Git commit hash and never query GitHub. In GitHub Actions, a published-release build uses the exact release tag; other events use the commit hash. This metadata also appears as the executable's Product version. Identifying a running build requires no runtime network or Git access.
+Build versions are embedded in the executable: local builds always use the full Git commit hash and never query GitHub. In GitHub Actions, version-tag/release builds use the exact version tag; rolling master builds use the commit hash. This metadata also appears as the executable's Product version. Identifying a running build requires no runtime network or Git access.
 
 ## GitHub Actions
 
@@ -25,10 +25,10 @@ One Windows Server 2022 job builds Release x64 and the test executable with MSBu
 
 Download artifacts from a workflow run's summary:
 
-- `L-Switcher-win-x64`: the tested standalone `L-Switcher.exe`, uploaded after all checks pass on master/tag/manual runs. Only the latest master executable is retained: a successful replacement upload removes older master executables from this workflow; failed builds keep the previous artifact. Main artifacts expire after 90 days without a replacement, tag artifacts after 7 days. Tag/release artifacts and diagnostics are excluded from master cleanup. PR runs validate the build without retaining another executable.
+- `L-Switcher-win-x64`: the tested standalone `L-Switcher.exe`, uploaded after all checks pass on master/tag/manual runs. Only the latest master executable is retained: a successful replacement upload removes older master executables from this workflow; failed builds keep the previous artifact. Master artifacts expire after 90 days without a replacement, tag artifacts after 7 days. Tag/release artifacts and diagnostics are excluded from master cleanup. PR runs validate the build without retaining another executable.
 - `L-Switcher-test-results`: build/test output and UI/DPI PNG previews, retained for 3 days and uploaded even when checks fail.
 
-Artifacts require access to this private repository. Word and clipboard integration checks remain local because they require Word or foreground desktop/clipboard access. This workflow does not create GitHub Releases or an installer.
+Artifacts require access to this private repository. Word and clipboard integration checks remain local because they require Word or foreground desktop/clipboard access. After tests pass, explicit `v*` tags publish `L-Switcher.exe` to their own GitHub Release. Master builds replace the single EXE in the rolling `master` prerelease and move its floating tag to the tested commit. Version release EXEs are preserved on reruns. Release assets remain available independently of Actions artifact expiration. PRs do not publish releases. No installer is produced.
 
 ## Configure
 

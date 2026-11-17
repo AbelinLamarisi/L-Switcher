@@ -5,7 +5,7 @@ function Resolve-BuildVersion {
     param([string]$Commit, [bool]$InActions = $false, [string]$EventName, [string]$ReleaseTag)
     if ($Commit -notmatch '^(?:[0-9a-fA-F]{40}|[0-9a-fA-F]{64})$') { throw 'A full Git commit hash is required.' }
     $commitId = $Commit.ToLowerInvariant()
-    if ($InActions -and $EventName -eq 'release' -and ![string]::IsNullOrWhiteSpace($ReleaseTag)) {
+    if ($InActions -and $EventName -in @('release', 'push', 'workflow_dispatch') -and ![string]::IsNullOrWhiteSpace($ReleaseTag)) {
         return [pscustomobject]@{ Version = $ReleaseTag; Identity = 'release:' + $ReleaseTag }
     }
     return [pscustomobject]@{ Version = $commitId; Identity = 'commit:' + $commitId }

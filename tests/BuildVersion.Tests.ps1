@@ -6,9 +6,15 @@ if ($local.Version -ne $hash -or $local.Identity -ne ('commit:' + $hash)) { thro
 $release = Resolve-BuildVersion -Commit $hash -InActions $true -EventName release -ReleaseTag 'v1.2.3-preview.1'
 if ($release.Version -ne 'v1.2.3-preview.1' -or $release.Identity -ne 'release:v1.2.3-preview.1') { throw 'A GitHub release build must use its exact release tag.' }
 foreach ($event in @('push', 'pull_request', 'workflow_dispatch')) {
-    $ordinary = Resolve-BuildVersion -Commit $hash -InActions $true -EventName $event -ReleaseTag 'v9.9.9'
+    $ordinary = Resolve-BuildVersion -Commit $hash -InActions $true -EventName $event
     if ($ordinary.Version -ne $hash) { throw "A non-release $event build must use its commit." }
 }
+foreach ($event in @('push', 'workflow_dispatch')) {
+    $tagged = Resolve-BuildVersion -Commit $hash -InActions $true -EventName $event -ReleaseTag 'v1.2.3'
+    if ($tagged.Identity -ne 'release:v1.2.3') { throw 'Explicit version-tag builds must use the tag.' }
+}
+$pr = Resolve-BuildVersion -Commit $hash -InActions $true -EventName pull_request -ReleaseTag 'v1.2.3'
+if ($pr.Version -ne $hash) { throw 'PR builds must ignore release tags.' }
 $missing = Resolve-BuildVersion -Commit $hash -InActions $true -EventName release
 if ($missing.Version -ne $hash) { throw 'An absent release identifier must fall back to the commit.' }
 $rejected = $false

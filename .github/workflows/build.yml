@@ -28,8 +28,9 @@ concurrency:
 jobs:
   build:
     name: Release x64 and tests
+    if: github.event_name != 'release' || startsWith(github.event.release.tag_name, 'v')
     permissions:
-      contents: read
+      contents: write
       actions: write
     runs-on: windows-2022
     timeout-minutes: 6
@@ -44,10 +45,12 @@ jobs:
       - uses: microsoft/setup-msbuild@v3
       - name: Build Release x64 and test executable
         env:
-          LSWITCHER_RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || '' }}
+          LSWITCHER_RELEASE_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
         run: |
           New-Item -ItemType Directory -Force artifacts | Out-Null
           node tests/ArtifactRetention.Tests.js
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/ReleasePublication.Tests.js
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           msbuild LSwitcher.csproj /t:Build /p:Configuration=Release /p:Platform=x64 /m /v:minimal *>&1 | Tee-Object artifacts/build.log
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -89,3 +92,10 @@ jobs:
           script: |
             const prune = require('./.github/scripts/prune-main-artifacts.js');
             await prune({ github, context, core, artifactId: Number(process.env.EXECUTABLE_ARTIFACT_ID) });
+      - name: Publish executable to GitHub Releases
+        if: success() && github.event_name != 'pull_request' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v'))
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const publish = require('./.github/scripts/publish-release.js');
+            await publish({ github, context, binary: require('fs').readFileSync('bin/Release/L-Switcher.exe') });
