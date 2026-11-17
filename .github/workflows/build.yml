@@ -59,6 +59,7 @@ jobs:
         run: |
           ./tests/bin/Release/LSwitcher.Tests.exe --ui-smoke --dpi-smoke *>&1 | Tee-Object artifacts/tests.log
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ./tests/PublishExecutable.Tests.ps1 -TestExecutable ./tests/bin/Release/LSwitcher.Tests.exe *>&1 | Tee-Object artifacts/publish-tests.log
       - name: Upload tested executable
         id: executable
         if: success() && github.event_name != 'pull_request'

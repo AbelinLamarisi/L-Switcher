@@ -13,6 +13,8 @@ Install Visual Studio Build Tools 2022 with the components in `.vsconfig` (alrea
 
 The release executable is standalone; copy `L-Switcher.exe` to a permanent folder before enabling startup.
 
+The local executable always lives at **`C:\Projects\LSwitcher\bin\Release\L-Switcher.exe`** (or `bin/Release/L-Switcher.exe` in another checkout). `build.ps1` compiles into the fixed `artifacts/build/Release` cache and publishes to that address after requested checks pass. Running binaries can be moved aside into `artifacts/previous-builds` while their mapped image finishes; unlocked backups are cleaned on subsequent publications. Building does not restart the application or discard settings edits. If another program prevents replacement, publishing fails while retaining the previous executable. Future builds do not create per-commit folders under `bin/Builds`.
+
 Build versions are embedded in the executable: local builds always use the full Git commit hash and never query GitHub. In GitHub Actions, a published-release build uses the exact release tag; other events use the commit hash. This metadata also appears as the executable's Product version. Identifying a running build requires no runtime network or Git access.
 
 ## GitHub Actions
