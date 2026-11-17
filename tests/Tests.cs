@@ -35,7 +35,7 @@ namespace LSwitcher
             {
                 Application.SetUnhandledExceptionMode(UnhandledExceptionMode.ThrowException);
                 Application.EnableVisualStyles();
-                Run(TestSingleInstance); Run(TestShortcutRecording); Run(TestTrayStatuses); Run(TestTaps); Run(TestValidation); Run(TestStorage); Run(TestConversion); Run(TestCase); Run(TestRichText); Run(TestLayouts); Run(TestPauseAndCapture); Run(TestColors);
+                Run(TestSingleInstance); Run(TestShortcutRecording); Run(TestTrayStatuses); Run(TestTaps); Run(TestValidation); Run(TestStorage); Run(TestColorConfigurationRecovery); Run(TestConversion); Run(TestCase); Run(TestRichText); Run(TestLayouts); Run(TestPauseAndCapture); Run(TestColors);
                 // Run COM checks before Application.Run tears down a WinForms synchronization context.
                 if (args.Contains("--word-smoke")) Run(TestWord);
                 if (args.Contains("--clipboard-smoke")) Run(TestClipboard);
@@ -135,12 +135,22 @@ namespace LSwitcher
             settings.Validate(); var clone = settings.Clone(); Equal(Color.Red.ToArgb(), clone.LabelColor(layouts[0].Id).ToArgb(), "Per-layout color survives JSON serialization");
             if (layouts.Count > 1) Equal(Color.Blue.ToArgb(), clone.LabelColor(layouts[1].Id).ToArgb(), "Other layout keeps its separate color");
             clone.LabelColors[0].Argb = Color.Green.ToArgb(); Equal(Color.Red.ToArgb(), settings.LabelColors[0].Argb, "Draft color does not modify saved settings");
+            settings.DefaultBackgroundArgb = Color.Navy.ToArgb();
+            settings.DefaultTextArgb = Color.Yellow.ToArgb();
+            settings.Bindings.Add(new LayoutBinding { LayoutId = layouts[0].Id });
             using (var engine = new HotkeyEngine(settings))
             using (var form = new SettingsForm(settings, engine, value => { throw new Exception("Color test must not save"); }))
             {
-                var preview = (Label)form.Controls.Find("LayoutColorPreview", true).Single(); Equal(Color.Red.ToArgb(), preview.ForeColor.ToArgb(), "Color preview uses selected layout");
-                if (layouts.Count > 1) { var selector = (ComboBox)form.Controls.Find("LayoutColorLayout", true).Single(); selector.SelectedIndex = 1; Equal(Color.Blue.ToArgb(), preview.ForeColor.ToArgb(), "Changing layout updates color preview"); }
+                var preview = form.Controls.Find("LayoutColors", true).Single();
+                Equal(Color.Red.ToArgb(), preview.ForeColor.ToArgb(), "Existing text override survives");
+                Equal(Color.Navy.ToArgb(), preview.BackColor.ToArgb(), "Layout inherits default background");
+                Equal(Color.Yellow.ToArgb(), form.Controls.Find("DefaultColorPreview", true).Single().ForeColor.ToArgb(), "Default preview uses global colors");
             }
+            settings.LabelColors[0].Argb = null;
+            settings.LabelColors[0].BackgroundArgb = Color.Teal.ToArgb();
+            var roundTrip = settings.Clone(); roundTrip.Validate();
+            Equal(Color.Yellow.ToArgb(), roundTrip.LabelColor(layouts[0].Id).ToArgb(), "Background-only override inherits text");
+            Equal(Color.Teal.ToArgb(), roundTrip.LabelBackground(layouts[0].Id).ToArgb(), "Individual background persists");
             clone.LabelColors.Add(new LayoutLabelColor { LayoutId = layouts[0].Id, Argb = Color.White.ToArgb() });
             bool rejected = false; try { clone.Validate(); } catch (InvalidDataException) { rejected = true; } Check(rejected, "Duplicate per-layout color is rejected");
         }

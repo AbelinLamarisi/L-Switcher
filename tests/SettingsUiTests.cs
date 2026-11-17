@@ -116,7 +116,7 @@ namespace LSwitcher
                             }
                             if (modalFailure != null) throw modalFailure;
                             Check(!apply.Enabled && remove.Enabled, "Re-adding original exclusion restores clean draft and selects it");
-                            tabs.SelectedIndex = 0; form.Controls.Find("LayoutColorPreview", true).Single().Parent.Controls.OfType<Button>().Single(b => b.Text == "Default").PerformClick();
+                            tabs.SelectedIndex = 0; form.Controls.Find("LayoutColors", true).Single().ContextMenuStrip.Items.Cast<ToolStripItem>().Single(item => item.Text == "Use default colors").PerformClick();
                             Check(apply.Enabled, "Resetting a custom color dirties settings"); Check(form.ApplyChanges() && !apply.Enabled, "Color reset can be applied");
                             var add = Find<Button>(form, "AddLayout"); Check(add.Width < form.ClientSize.Width / 2, "Add layout button is compact");
                             for (int i = 0; i < 25; i++) add.PerformClick();
@@ -140,7 +140,7 @@ namespace LSwitcher
                 Equal(paused, tip.Contains("Hotkeys paused"), "Tooltip accurately reports manual pause"); Equal(excluded, tip.Contains("Hotkeys disabled for this app"), "Tooltip accurately reports application exclusion");
                 string longTip = TrayPresentation.Tooltip(new string('X', 200), paused, excluded); Check(longTip.Length <= 63, "Tray tooltip fits Windows limit");
                 Equal(paused, longTip.Contains("Hotkeys paused"), "Long name keeps manual pause explanation"); Equal(excluded, longTip.Contains("Hotkeys disabled for this app"), "Long name keeps exclusion explanation");
-                using (var icon = TrayPresentation.Draw("EN", Color.White, paused, excluded))
+                using (var icon = TrayPresentation.Draw("EN", Color.White, Color.Black, paused, excluded))
                 using (var stream = new MemoryStream())
                 { icon.Save(stream, System.Drawing.Imaging.ImageFormat.Png); icons.Add(Convert.ToBase64String(stream.ToArray())); icon.Save(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tray-" + paused + "-" + excluded + ".png")); }
             }

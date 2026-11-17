@@ -113,8 +113,9 @@ namespace LSwitcher
             bindingRows.Padding = new Padding(8);
             var header = FitRow(700); header.Padding = new Padding(4, 8, 4, 8); header.BackColor = SystemColors.Control;
             header.Controls.AddRange(new Control[] {
-                new Label { Text = "Keyboard layout", Width = 290, Height = 22, TextAlign = ContentAlignment.MiddleLeft },
+                new Label { Text = "Keyboard layout", Width = 260, Height = 22, TextAlign = ContentAlignment.MiddleLeft },
                 new Label { Text = "Activation shortcut", Width = 205, Height = 22, TextAlign = ContentAlignment.MiddleLeft },
+                new Label { Text = "Colors", Width = 68, Height = 22, TextAlign = ContentAlignment.MiddleLeft },
                 new Label { Text = "Actions", Width = 145, Height = 22, TextAlign = ContentAlignment.MiddleLeft }
             });
             bindingRows.Controls.Add(header);
@@ -217,25 +218,54 @@ namespace LSwitcher
             row.Controls.Add(new Label { Text = title, Width = 150, Height = 28, TextAlign = ContentAlignment.MiddleLeft });
             row.Controls.Add(field); return row;
         }
+        private readonly Label defaultPreview = new Label { Name = "DefaultColorPreview", Text = "Aa", Width = 55, Height = 27, TextAlign = ContentAlignment.MiddleCenter };
         private Control ColorSettings()
         {
-            var group = new GroupBox { Text = "Tray label colors (independent of key assignments)", Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
-            var panel = FitRow(); panel.Dock = DockStyle.Top; panel.WrapContents = true; panel.Padding = new Padding(5, 8, 5, 5); group.Controls.Add(panel);
-            var selector = LayoutCombo(null); selector.Name = "LayoutColorLayout";
-            foreach (var color in draft.LabelColors)
-                if (!selector.Items.Cast<KeyboardLayout>().Any(l => l.Id == color.LayoutId)) selector.Items.Add(new KeyboardLayout { Id = color.LayoutId, Name = "Layout unavailable (" + color.LayoutId + ")", Label = "??" });
-            var choose = ButtonFor("Color…", 80); var reset = ButtonFor("Default", 80);
-            var preview = new Label { Name = "LayoutColorPreview", Width = 55, Height = 27, BackColor = SystemColors.WindowText, TextAlign = ContentAlignment.MiddleCenter };
-            Action update = () => { var layout = selector.SelectedItem as KeyboardLayout; preview.Text = layout?.Label ?? "??"; preview.ForeColor = draft.LabelColor(layout?.Id); choose.Enabled = reset.Enabled = layout != null; RefreshDraft(); };
-            selector.SelectedIndexChanged += (s, e) => update();
-            choose.Click += (s, e) =>
+            var group = new GroupBox { Text = "Default Color", Dock = DockStyle.Bottom, AutoSize = true, AutoSizeMode = AutoSizeMode.GrowAndShrink };
+            var panel = FitRow(); panel.Dock = DockStyle.Top; panel.Padding = new Padding(5, 8, 5, 5); group.Controls.Add(panel);
+            var text = ButtonFor("Text…"); var background = ButtonFor("Background…");
+            text.Click += (s, e) => PickColor(null, false);
+            background.Click += (s, e) => PickColor(null, true);
+            foreach (Control control in new Control[] { text, background, defaultPreview })
             {
-                var layout = selector.SelectedItem as KeyboardLayout; if (layout == null) return;
-                using (var dialog = new ColorDialog { Color = draft.LabelColor(layout.Id), FullOpen = true })
-                    if (dialog.ShowDialog(this) == DialogResult.OK) { draft.LabelColors.RemoveAll(c => c.LayoutId == layout.Id); draft.LabelColors.Add(new LayoutLabelColor { LayoutId = layout.Id, Argb = dialog.Color.ToArgb() }); update(); }
-            };
-            reset.Click += (s, e) => { var layout = selector.SelectedItem as KeyboardLayout; if (layout != null) draft.LabelColors.RemoveAll(c => c.LayoutId == layout.Id); update(); };
-            panel.Controls.AddRange(new Control[] { selector, choose, reset, preview }); if (selector.Items.Count > 0) selector.SelectedIndex = 0; update(); return group;
+                control.Anchor = AnchorStyles.Left; control.Margin = new Padding(3); panel.Controls.Add(control);
+            }
+            RefreshColorPreviews();
+            return group;
+        }
+        private void PickColor(string layoutId, bool background)
+        {
+            using (var dialog = new ColorDialog { FullOpen = true, Color = background ? draft.LabelBackground(layoutId) : draft.LabelColor(layoutId) })
+            {
+                if (dialog.ShowDialog(this) != DialogResult.OK) return;
+                int color = dialog.Color.ToArgb();
+                if (layoutId == null)
+                {
+                    if (background) draft.DefaultBackgroundArgb = color;
+                    else draft.DefaultTextArgb = color;
+                }
+                else
+                {
+                    var entry = draft.LabelColors.FirstOrDefault(c => c.LayoutId == layoutId);
+                    if (entry == null) { entry = new LayoutLabelColor { LayoutId = layoutId }; draft.LabelColors.Add(entry); }
+                    if (background) entry.BackgroundArgb = color;
+                    else entry.Argb = color;
+                }
+            }
+            RefreshColorPreviews(); RefreshDraft();
+        }
+        private void RefreshColorPreviews()
+        {
+            defaultPreview.ForeColor = draft.LabelColor(null); defaultPreview.BackColor = draft.LabelBackground(null);
+            foreach (var row in rows)
+            {
+                var layout = row.Item1.SelectedItem as KeyboardLayout;
+                var button = (Button)row.Item3.Controls["LayoutColors"];
+                button.Enabled = layout != null;
+                button.Text = (layout?.Label ?? "??") + " ▾";
+                button.ForeColor = draft.LabelColor(layout?.Id);
+                button.BackColor = draft.LabelBackground(layout?.Id);
+            }
         }
         private static Label LabelFor(string text) { return new Label { Text = text, AutoSize = true, Margin = new Padding(3, 10, 3, 5) }; }
         private ComboBox LayoutCombo(string id)
@@ -275,14 +305,28 @@ namespace LSwitcher
         private void AddBinding(LayoutBinding binding, bool focus = false)
         {
             var panel = FitRow(700); panel.Margin = new Padding(0, 0, 0, 1); panel.Padding = new Padding(4, 8, 4, 8);
-            var layout = LayoutCombo(binding.LayoutId); layout.Name = "BindingLayout"; layout.Width = 290;
+            var layout = LayoutCombo(binding.LayoutId); layout.Name = "BindingLayout"; layout.Width = 260;
             var shortcut = AssignmentBox(binding.Shortcut, "LayoutShortcut"); shortcut.Width = 205;
             var clear = ClearButton(shortcut);
             var remove = ButtonFor("Remove");
             var row = Tuple.Create<ComboBox, ShortcutBox, Panel>(layout, shortcut, panel); rows.Add(row);
-            layout.SelectedIndexChanged += (s, e) => RefreshDraft();
+            var colors = ButtonFor("", 68); colors.Name = "LayoutColors"; colors.UseVisualStyleBackColor = false;
+            colors.AccessibleName = "Tray colors for this layout";
+            var menu = new ContextMenuStrip();
+            var text = menu.Items.Add("Text…"); var background = menu.Items.Add("Background…");
+            menu.Items.Add(new ToolStripSeparator());
+            var inherit = menu.Items.Add("Use default colors");
+            Func<string> selectedId = () => (layout.SelectedItem as KeyboardLayout)?.Id;
+            text.Click += (s, e) => PickColor(selectedId(), false);
+            background.Click += (s, e) => PickColor(selectedId(), true);
+            inherit.Click += (s, e) => { draft.LabelColors.RemoveAll(c => c.LayoutId == selectedId()); RefreshColorPreviews(); RefreshDraft(); };
+            menu.Opening += (s, e) => inherit.Enabled = draft.LabelColors.Any(c => c.LayoutId == selectedId());
+            colors.Click += (s, e) => menu.Show(colors, 0, colors.Height);
+            colors.ContextMenuStrip = menu;
+            colors.Disposed += (s, e) => menu.Dispose();
+            layout.SelectedIndexChanged += (s, e) => { RefreshColorPreviews(); RefreshDraft(); };
             remove.Click += (s, e) => { rows.Remove(row); edited.Remove(shortcut); bindingRows.Controls.Remove(panel); panel.Dispose(); RefreshBindingColors(); RefreshDraft(); };
-            panel.Controls.AddRange(new Control[] { layout, shortcut, clear, remove }); AddDpiControl(bindingRows, panel); RefreshBindingColors();
+            panel.Controls.AddRange(new Control[] { layout, shortcut, colors, clear, remove }); AddDpiControl(bindingRows, panel); RefreshBindingColors(); RefreshColorPreviews();
             RefreshDraft(); if (focus) { bindingRows.PerformLayout(); bindingRows.ScrollControlIntoView(panel); layout.Focus(); }
         }
         private void RefreshBindingColors()

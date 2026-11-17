@@ -81,8 +81,9 @@ namespace LSwitcher
             bool excluded = engine.Excluded(Native.GetForegroundWindow());
             tray.Text = TrayPresentation.Tooltip(name, engine.Paused, excluded); pause.Text = engine.Paused ? "Resume hotkeys" : "Pause hotkeys";
             Color labelColor = settings.LabelColor(layout?.Id);
-            string state = (layout?.Id ?? "") + label + engine.Paused + ":" + excluded + labelColor.ToArgb(); if (state == lastIconState) return; lastIconState = state;
-            using (var bitmap = TrayPresentation.Draw(label, labelColor, engine.Paused, excluded))
+            Color background = settings.LabelBackground(layout?.Id);
+            string state = (layout?.Id ?? "") + label + engine.Paused + ":" + excluded + labelColor.ToArgb() + ":" + background.ToArgb(); if (state == lastIconState) return; lastIconState = state;
+            using (var bitmap = TrayPresentation.Draw(label, labelColor, background, engine.Paused, excluded))
             {
                 IntPtr handle = bitmap.GetHicon(); Icon replacement; try { replacement = (Icon)Icon.FromHandle(handle).Clone(); } finally { Native.DestroyIcon(handle); }
                 tray.Icon = replacement; var old = icon; icon = replacement; old?.Dispose();

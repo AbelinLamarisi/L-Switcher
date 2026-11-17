@@ -17,6 +17,7 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 - Support startup with Windows, controlled by a checkbox in settings; disabled by default.
 - Settings UI is English. The tray icon displays a two-letter abbreviation of the active layout.
 - Allow users to choose a separate tray-label color for each keyboard layout in settings.
+- Support independent tray text and background overrides, including background-only entries with inherited text colors. Defaults can be configured globally; missing components inherit defaults. Preserve existing foreground-only configurations and recover validation failures through the previous valid backup or defaults with a warning. Compatibility fix recorded on 2026-11-17.
 - No automatic language detection or automatic switching while typing.
 - Allow direct activation of any installed keyboard layout through assigned keys, rather than cycling through layouts.
 - Support standalone modifier keys, distinguish left/right keys, and support media keys as assignment targets. Example mappings (not fixed defaults): Left Ctrl → Russian, Left Shift → English, a media key → German.
@@ -143,6 +144,7 @@ Validation on 2026-11-13: Release x64 build and 967 core/UI/DPI assertions passe
 
 ### Prototype implementation (2026-11-10)
 
+- On 2026-11-17, shipped independent foreground/background colors and global defaults together so background-only configurations remain loadable. Fixed settings recovery to explicitly catch `InvalidDataException` from semantic validation. Regression tests cover background-only/legacy foreground entries, disk round trips, preservation of hotkeys and backups, invalid/duplicate colors, and invalid primary plus backup. Release and 1140 core/UI/DPI checks passed; the existing user configuration loaded without warnings and was left unchanged.
 - On 2026-11-14, made launch behavior build-aware: identical release tags/commit identifiers open existing settings without restarting; different or unknown identifiers use graceful replacement. Build metadata is generated into `obj`, embedded in the executable and published through per-user/session shared memory. Local builds use Git only; GitHub Actions published-release builds use the event's tag. Clean-snapshot Release and 989 core/UI/DPI checks passed, including same-version settings activation in a separate process and replacement by an older but different release tag. Separate PowerShell checks cover build-version selection.
 - On 2026-11-14, added the persisted `Deselect text after conversion` option in the keyboard-layout conversion group, disabled by default and independent of case commands. Word and clipboard/UIA paths collapse to the converted text end, including unchanged editable text; empty/read-only selections remain untouched. Release build, 973 core/UI/DPI assertions and the 163-assertion local Word/clipboard suite passed.
 - Implemented the .NET Framework 4.8 x64 project, settings UI, tray, single-instance activation, keyboard/mouse hooks, direct layout activation, exclusions, startup control, and JSON recovery/backup.

@@ -38,7 +38,8 @@ namespace LSwitcher
     [DataContract] public sealed class LayoutLabelColor
     {
         [DataMember] public string LayoutId { get; set; }
-        [DataMember] public int Argb { get; set; }
+        [DataMember(EmitDefaultValue = false)] public int? Argb { get; set; }
+        [DataMember(EmitDefaultValue = false)] public int? BackgroundArgb { get; set; }
     }
     [DataContract] public sealed class Settings
     {
@@ -63,12 +64,16 @@ namespace LSwitcher
             LowercaseShortcut = LowercaseShortcut ?? new Shortcut(); InvertCaseShortcut = InvertCaseShortcut ?? new Shortcut();
             LabelColors = LabelColors ?? new List<LayoutLabelColor>();
         }
+        [DataMember(EmitDefaultValue = false)] public int? DefaultTextArgb { get; set; }
+        [DataMember(EmitDefaultValue = false)] public int? DefaultBackgroundArgb { get; set; }
+        private static bool ValidColor(int? value) { return !value.HasValue || (unchecked((uint)value.Value) >> 24) == 255; }
         public void Validate()
         {
             if (SchemaVersion != 1) throw new InvalidDataException("Unsupported settings schema version.");
             if (TapMilliseconds < 50 || TapMilliseconds > 2000) throw new InvalidDataException("Short-tap limit must be between 50 and 2000 ms.");
             if (Bindings == null || Exclusions == null || ConversionShortcut == null || PauseShortcut == null || UppercaseShortcut == null || LowercaseShortcut == null || InvertCaseShortcut == null || LabelColors == null) throw new InvalidDataException("Settings are incomplete.");
-            if (LabelColors.Any(c => c == null || string.IsNullOrWhiteSpace(c.LayoutId) || (unchecked((uint)c.Argb) >> 24) != 255) || LabelColors.GroupBy(c => c.LayoutId).Any(g => g.Count() > 1)) throw new InvalidDataException("Each layout may have one opaque tray-label color.");
+            if (!ValidColor(DefaultTextArgb) || !ValidColor(DefaultBackgroundArgb)) throw new InvalidDataException("Default tray colors must be opaque.");
+            if (LabelColors.Any(c => c == null || string.IsNullOrWhiteSpace(c.LayoutId) || !ValidColor(c.Argb) || !ValidColor(c.BackgroundArgb)) || LabelColors.GroupBy(c => c.LayoutId).Any(g => g.Count() > 1)) throw new InvalidDataException("Each layout may have one opaque tray-label color.");
             var shortcuts = new List<Shortcut> { ConversionShortcut, PauseShortcut, UppercaseShortcut, LowercaseShortcut, InvertCaseShortcut };
             foreach (var b in Bindings) { if (b == null || string.IsNullOrWhiteSpace(b.LayoutId) || b.Shortcut == null) throw new InvalidDataException("Choose a layout for every binding."); shortcuts.Add(b.Shortcut); }
             foreach (var s in shortcuts)
@@ -82,7 +87,12 @@ namespace LSwitcher
         internal System.Drawing.Color LabelColor(string layoutId)
         {
             var entry = LabelColors.FirstOrDefault(c => c.LayoutId == layoutId);
-            return entry == null ? System.Drawing.SystemColors.Window : System.Drawing.Color.FromArgb(entry.Argb);
+            return System.Drawing.Color.FromArgb(entry?.Argb ?? DefaultTextArgb ?? System.Drawing.SystemColors.Window.ToArgb());
+        }
+        internal System.Drawing.Color LabelBackground(string layoutId)
+        {
+            var entry = LabelColors.FirstOrDefault(c => c.LayoutId == layoutId);
+            return System.Drawing.Color.FromArgb(entry?.BackgroundArgb ?? DefaultBackgroundArgb ?? System.Drawing.SystemColors.WindowText.ToArgb());
         }
         internal static DataContractJsonSerializer Serializer { get { return new DataContractJsonSerializer(typeof(Settings)); } }
     }
@@ -96,7 +106,7 @@ namespace LSwitcher
         {
             if (!Exists) return new Settings();
             try { return Read(FilePath); }
-            catch (Exception ex) when (ex is IOException || ex is SerializationException || ex is InvalidOperationException || ex is ArgumentException)
+            catch (Exception ex) when (ex is IOException || ex is InvalidDataException || ex is SerializationException || ex is InvalidOperationException || ex is ArgumentException)
             {
                 LoadWarning = "Settings could not be loaded: " + ex.Message;
                 try { var recovered = Read(FilePath + ".bak"); LoadWarning += "\nThe previous valid backup was loaded."; return recovered; }
