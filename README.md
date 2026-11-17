@@ -23,7 +23,7 @@ One Windows Server 2022 job builds Release x64 and the test executable with MSBu
 
 Download artifacts from a workflow run's summary:
 
-- `L-Switcher-win-x64`: the tested standalone `L-Switcher.exe`, retained for 7 days and uploaded after all checks pass on main/tag/manual runs. PR runs validate the build without retaining another executable.
+- `L-Switcher-win-x64`: the tested standalone `L-Switcher.exe`, uploaded after all checks pass on main/tag/manual runs. Only the latest main executable is retained: a successful replacement upload removes older main executables from this workflow; failed builds keep the previous artifact. Main artifacts expire after 90 days without a replacement, tag artifacts after 7 days. Tag/release artifacts and diagnostics are excluded from main cleanup. PR runs validate the build without retaining another executable.
 - `L-Switcher-test-results`: build/test output and UI/DPI PNG previews, retained for 3 days and uploaded even when checks fail.
 
 Artifacts require access to this private repository. Word and clipboard integration checks remain local because they require Word or foreground desktop/clipboard access. This workflow does not create GitHub Releases or an installer.

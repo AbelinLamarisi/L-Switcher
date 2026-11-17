@@ -50,6 +50,7 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 - Include selection case conversion in the prototype: uppercase, lowercase, and invert case, each with a user-assignable hotkey. Approved during the interactive feature review.
 - Distribution must not require users to install dependencies: a standalone executable.
 - Accepted on 2026-11-14: successful CI builds must provide a downloadable build artifact containing the standalone executable. Routine CI artifacts and GitHub Releases are separate: publish a binary to GitHub Releases only for an explicitly requested/created release, never automatically for ordinary pushes or CI success.
+- Accepted on 2026-11-17: main has only one retained executable artifact, replaced after each successful build and upload. Failed builds retain the previous working artifact. Cleanup must preserve tag/release artifacts and diagnostics. Main's latest executable expires after 90 days without a replacement; tag artifacts retain their separate expiration policy.
 - Installing the development toolchain on this machine should be straightforward.
 - Technology stack: C# + Windows Forms targeting .NET Framework 4.8, with Windows API interop where needed.
 - Do not bundle the runtime. Use the Windows-provided .NET Framework on Windows 11 and later; no separate modern .NET Desktop Runtime prerequisite.
