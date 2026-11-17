@@ -1,5 +1,20 @@
 # L-Switcher
 
+![L-Switcher — Layouts, Conversion, Exclusions and General](docs/images/overview.png)
+
+**Your keyboard. Your language. One tap.**
+
+- **Jump straight to your language.** Give each layout its own key or shortcut.
+- **Fix the text. Keep the flow.** Select `ghbdtn`, press a shortcut, get `привет`.
+- **Make your case.** UPPERCASE, lowercase, or invert — instantly.
+- **Stay in control.** Color your tray labels. Exclude apps. Pause anytime.
+
+Example settings shown. View each tab: [Layouts](docs/images/layouts.png) · [Conversion](docs/images/conversion.png) · [Exclusions](docs/images/exclusions.png) · [General](docs/images/general.png).
+
+**Windows 11+ · One executable · Lives in your tray**
+
+## Technical overview
+
 A Windows 11+ x64 tray utility for explicit keyboard-layout shortcuts and selected-text conversion. Prototype written in C# / Windows Forms for .NET Framework 4.8. No third-party libraries or separate runtime installation.
 
 ## Build and run

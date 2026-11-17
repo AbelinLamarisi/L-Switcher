@@ -66,6 +66,8 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 
 ## Accepted settings and tray UI
 
+- README presentation accepted on 2026-11-17: lead with a styled overview of the four actual settings tabs and short benefit-focused statements; keep technical documentation below the introduction. Screenshots use an example configuration.
+
 - Application icon selected on 2026-11-14: tilted violet/coral S-shaped exchange ribbon with a large white L, without outlines (variant 1 of the final comparison). Embed a multi-resolution ICO in the EXE and application windows; retain the active-layout/status indicator in the tray. Implemented with transparent PNG exports and ten ICO sizes from 16 to 256 px.
 
 - Use tabs: `Layouts`, `Conversion`, `Exclusions`, and `General`.
