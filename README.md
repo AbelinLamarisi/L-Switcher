@@ -19,7 +19,13 @@ A Windows 11+ x64 tray utility for explicit keyboard-layout shortcuts and select
 
 ## Build and run
 
-Install Visual Studio Build Tools 2022 with the components in `.vsconfig` (already installed on the development machine). A modern .NET SDK is not required.
+Install **Visual Studio Build Tools 2022** with these components (also listed in [.vsconfig](.vsconfig)):
+
+- **.NET desktop build tools** (`Microsoft.VisualStudio.Workload.ManagedDesktopBuildTools`) — MSBuild, the Roslyn C# compiler, and desktop application build tools.
+- **.NET Framework 4.8 Targeting Pack** (`Microsoft.Net.Component.4.8.TargetingPack`) — reference assemblies for compiling against .NET Framework 4.8.
+- **.NET Framework 4.8 SDK** (`Microsoft.Net.Component.4.8.SDK`) — framework development tools.
+
+Use Git for Windows for checkout and build version identification, and PowerShell to run the build script. The full Visual Studio IDE and a modern .NET SDK are not required.
 
 ```powershell
 .\build.ps1 -Test
