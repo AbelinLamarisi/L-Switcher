@@ -10,6 +10,7 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 
 - Primarily for personal use, with public open-source distribution planned.
 - Repository name: L-Switcher.
+- The default branch is `master` (renamed from `main` on 2026-11-17).
 - Keep the GitHub repository private for now. Future open-source distribution remains planned.
 - Target Windows 11 and later; ARM support is out of scope.
 - Minimal UI: system tray icon(s) and a settings window.
@@ -50,7 +51,7 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 - Include selection case conversion in the prototype: uppercase, lowercase, and invert case, each with a user-assignable hotkey. Approved during the interactive feature review.
 - Distribution must not require users to install dependencies: a standalone executable.
 - Accepted on 2026-11-14: successful CI builds must provide a downloadable build artifact containing the standalone executable. Routine CI artifacts and GitHub Releases are separate: publish a binary to GitHub Releases only for an explicitly requested/created release, never automatically for ordinary pushes or CI success.
-- Accepted on 2026-11-17: main has only one retained executable artifact, replaced after each successful build and upload. Failed builds retain the previous working artifact. Cleanup must preserve tag/release artifacts and diagnostics. Main's latest executable expires after 90 days without a replacement; tag artifacts retain their separate expiration policy.
+- Accepted on 2026-11-17: master has only one retained executable artifact, replaced after each successful build and upload. Failed builds retain the previous working artifact. Cleanup must preserve tag/release artifacts and diagnostics. Main's latest executable expires after 90 days without a replacement; tag artifacts retain their separate expiration policy.
 - Installing the development toolchain on this machine should be straightforward.
 - Technology stack: C# + Windows Forms targeting .NET Framework 4.8, with Windows API interop where needed.
 - Do not bundle the runtime. Use the Windows-provided .NET Framework on Windows 11 and later; no separate modern .NET Desktop Runtime prerequisite.
@@ -112,7 +113,7 @@ Inspired by Punto Switcher feature descriptions and the current L-Switcher scope
 - Use minimal Visual Studio Build Tools rather than installing the full Visual Studio IDE. Select the components needed to build C# WinForms targeting .NET Framework 4.8 when implementation begins.
 - Third-party open-source libraries are allowed, but ask the user before adding each library. Prefer popular, actively maintained libraries; this preference does not replace individual approval.
 - Set up GitHub Actions automated builds from the start of implementation, rather than deferring CI until later.
-- Optimize GitHub Actions usage for the user's GitHub Free plan: one Windows job with all core/UI/DPI checks, automatic runs for relevant main/PR changes and version tags, manual dispatch, cancellation of superseded runs, short timeouts, and short artifact retention. Skip documentation-only branch/PR changes and duplicate feature-branch push runs; retain tested executables for main/tag/manual builds rather than every PR.
+- Optimize GitHub Actions usage for the user's GitHub Free plan: one Windows job with all core/UI/DPI checks, automatic runs for relevant master/PR changes and version tags, manual dispatch, cancellation of superseded runs, short timeouts, and short artifact retention. Skip documentation-only branch/PR changes and duplicate feature-branch push runs; retain tested executables for master/tag/manual builds rather than every PR.
 - Tool installation was explicitly authorized and completed on 2026-11-10. Application implementation was subsequently authorized on the same day.
 
 ## Open questions

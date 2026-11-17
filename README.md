@@ -17,13 +17,13 @@ Build versions are embedded in the executable: local builds always use the full 
 
 ## GitHub Actions
 
-The [Windows build and tests workflow](https://github.com/AbelinLamarisi/L-Switcher/actions/workflows/build.yml) runs on pushes to `main`, `v*` tags, pull requests, and manual dispatch. Documentation-only changes (Markdown, `docs/`, license files, or `.gitignore`) skip automatic branch/PR runs. Feature-branch pushes are checked through their PR, avoiding duplicate push/PR builds. Version tags always run.
+The [Windows build and tests workflow](https://github.com/AbelinLamarisi/L-Switcher/actions/workflows/build.yml) runs on pushes to `master`, `v*` tags, pull requests, and manual dispatch. Documentation-only changes (Markdown, `docs/`, license files, or `.gitignore`) skip automatic branch/PR runs. Feature-branch pushes are checked through their PR, avoiding duplicate push/PR builds. Version tags always run.
 
 One Windows Server 2022 job builds Release x64 and the test executable with MSBuild, then runs all core and UI/DPI checks once. A failed build or assertion fails the job. The job has a 6-minute timeout; tests have a 2-minute timeout. Superseded runs for the same branch/PR are canceled. Tests require Windows APIs, so they remain together on Windows without extra jobs or a platform matrix.
 
 Download artifacts from a workflow run's summary:
 
-- `L-Switcher-win-x64`: the tested standalone `L-Switcher.exe`, uploaded after all checks pass on main/tag/manual runs. Only the latest main executable is retained: a successful replacement upload removes older main executables from this workflow; failed builds keep the previous artifact. Main artifacts expire after 90 days without a replacement, tag artifacts after 7 days. Tag/release artifacts and diagnostics are excluded from main cleanup. PR runs validate the build without retaining another executable.
+- `L-Switcher-win-x64`: the tested standalone `L-Switcher.exe`, uploaded after all checks pass on master/tag/manual runs. Only the latest master executable is retained: a successful replacement upload removes older master executables from this workflow; failed builds keep the previous artifact. Main artifacts expire after 90 days without a replacement, tag artifacts after 7 days. Tag/release artifacts and diagnostics are excluded from master cleanup. PR runs validate the build without retaining another executable.
 - `L-Switcher-test-results`: build/test output and UI/DPI PNG previews, retained for 3 days and uploaded even when checks fail.
 
 Artifacts require access to this private repository. Word and clipboard integration checks remain local because they require Word or foreground desktop/clipboard access. This workflow does not create GitHub Releases or an installer.

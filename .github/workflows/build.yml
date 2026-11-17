@@ -3,7 +3,7 @@ on:
   release:
     types: [published]
   push:
-    branches: [main]
+    branches: [master]
     tags: ['v*']
     paths-ignore:
       - '**/*.md'
@@ -67,7 +67,7 @@ jobs:
           name: L-Switcher-win-x64
           path: bin/Release/L-Switcher.exe
           if-no-files-found: error
-          retention-days: ${{ github.ref == 'refs/heads/main' && 90 || 7 }}
+          retention-days: ${{ github.ref == 'refs/heads/master' && 90 || 7 }}
       - name: Upload test log and UI previews
         if: always()
         uses: actions/upload-artifact@v6
@@ -79,8 +79,8 @@ jobs:
             tests/bin/Release/dpi-*.png
           if-no-files-found: warn
           retention-days: 3
-      - name: Keep only the newest main executable
-        if: success() && github.ref == 'refs/heads/main' && github.event_name != 'release' && steps.executable.outputs.artifact-id != ''
+      - name: Keep only the newest master executable
+        if: success() && github.ref == 'refs/heads/master' && github.event_name != 'release' && steps.executable.outputs.artifact-id != ''
         uses: actions/github-script@v9
         env:
           EXECUTABLE_ARTIFACT_ID: ${{ steps.executable.outputs.artifact-id }}
