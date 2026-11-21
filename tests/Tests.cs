@@ -85,7 +85,9 @@ namespace LSwitcher
                 File.WriteAllText(store.FilePath, "{\"SchemaVersion\":1,\"TapMilliseconds\":300,\"Bindings\":[],\"Exclusions\":[],\"ConversionShortcut\":{\"Key\":0,\"Modifiers\":0},\"Direction\":0}");
                 var upgraded = new SettingsStore(store.FilePath).Load(); Equal(0, upgraded.PauseShortcut.Key, "Old schema-one settings gain an unassigned pause shortcut"); Equal(0, upgraded.UppercaseShortcut.Key, "Old settings gain unassigned case shortcuts");
                 Equal(0, upgraded.LabelColors.Count, "Old settings use default tray colors");
-                Check(!upgraded.DeselectAfterLayoutConversion, "Old settings retain converted selection by default");
+                Check(upgraded.DeselectAfterLayoutConversion, "Settings without a deselection preference use the enabled default");
+                Check(new Settings().DeselectAfterLayoutConversion, "New settings deselect by default");
+                Check(!new Settings { DeselectAfterLayoutConversion = false }.Clone().DeselectAfterLayoutConversion, "Explicit disabled preference survives JSON serialization");
                 Check(new Settings { DeselectAfterLayoutConversion = true }.Clone().DeselectAfterLayoutConversion, "Deselect preference survives JSON serialization");
             }
             finally { foreach (string path in Directory.GetFiles(dir)) File.Delete(path); Directory.Delete(dir); }
@@ -287,7 +289,7 @@ namespace LSwitcher
                             foreach (var range in ((System.Windows.Automation.TextPattern)textPattern).GetSelection()) Console.WriteLine("UIA selection: [" + range.GetText(-1) + "]; read-only: " + range.GetAttributeValue(System.Windows.Automation.TextPattern.IsReadOnlyAttribute));
                         }
                         var sentinel = new DataObject(); sentinel.SetText("L-Switcher clipboard test"); sentinel.SetData("L-Switcher.Test", "preserve this format"); Clipboard.SetDataObject(sentinel, true);
-                        service.Run(form.Handle, new Settings { FirstLayout = en.Id, SecondLayout = ru.Id });
+                        service.Run(form.Handle, new Settings { FirstLayout = en.Id, SecondLayout = ru.Id, DeselectAfterLayoutConversion = false });
                         for (int i = 0; i < 100 && rich.Text != "руддщю ghbdtn/" && failure == null; i++) await Task.Delay(30);
                         await Task.Delay(300);
                         Equal("руддщю ghbdtn/", rich.Text, "Clipboard path converts editable selection; notice: " + failure);

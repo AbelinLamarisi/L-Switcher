@@ -45,7 +45,7 @@ Update this plan whenever the user makes a decision; promptly record accepted de
 - Preserve case, spaces, and line breaks. Convert punctuation according to physical key positions. Leave characters outside the configured pair unchanged.
 - Temporary clipboard use with restoration of its contents is allowed if that implementation approach is selected.
 - Preserve internal text formatting where possible, including in the prototype. If formatting cannot be preserved, still convert using plain text with formatting loss. This supersedes the earlier prohibition on plain-text fallback.
-- Keep converted text selected by default. The `Keyboard layout conversion` group includes `Deselect text after conversion`, disabled by default; when enabled, collapse the selection to the end after layout conversion. This option does not affect selection case commands. Accepted on 2026-11-14.
+- The `Keyboard layout conversion` group includes `Deselect text after conversion`; when enabled, collapse the selection to the end after layout conversion. Enabled by default as accepted on 2026-11-21, superseding the disabled default accepted on 2026-11-14. Missing preferences use the enabled default; explicitly saved choices are preserved. This option does not affect selection case commands.
 - With no selection, the conversion command does nothing.
 - Do nothing for read-only selections.
 - Include selection case conversion in the prototype: uppercase, lowercase, and invert case, each with a user-assignable hotkey. Approved during the interactive feature review.
