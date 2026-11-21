@@ -7,6 +7,14 @@ namespace LSwitcher
     internal static class Native
     {
         [StructLayout(LayoutKind.Sequential)] internal struct RECT { public int left, top, right, bottom; }
+        [StructLayout(LayoutKind.Sequential)] internal struct GUITHREADINFO
+        {
+            public uint cbSize, flags;
+            public IntPtr hwndActive, hwndFocus, hwndCapture, hwndMenuOwner, hwndMoveSize, hwndCaret;
+            public RECT rcCaret;
+        }
+        [DllImport("user32.dll")] internal static extern bool GetGUIThreadInfo(uint thread, ref GUITHREADINFO info);
+        [DllImport("user32.dll")] internal static extern bool IsChild(IntPtr parent, IntPtr child);
         [DllImport("user32.dll")] internal static extern uint GetDpiForWindow(IntPtr window);
         internal delegate IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam);
         [StructLayout(LayoutKind.Sequential)] internal struct KeyboardData { public uint vk, scan, flags, time; public UIntPtr extra; }

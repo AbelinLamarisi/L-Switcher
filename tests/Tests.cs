@@ -14,6 +14,8 @@ namespace LSwitcher
         private static int assertions;
         [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
         [DllImport("user32.dll")] private static extern bool AttachThreadInput(uint from, uint to, bool attach);
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern IntPtr LoadKeyboardLayout(string id, uint flags);
+        [DllImport("user32.dll")] private static extern bool UnloadKeyboardLayout(IntPtr layout);
         private static void FocusTestWindow(IntPtr window)
         {
             uint pid; uint foregroundThread = Native.GetWindowThreadProcessId(Native.GetForegroundWindow(), out pid), thread = GetCurrentThreadId();
@@ -39,12 +41,90 @@ namespace LSwitcher
                 // Run COM checks before Application.Run tears down a WinForms synchronization context.
                 if (args.Contains("--word-smoke")) Run(TestWord);
                 if (args.Contains("--clipboard-smoke")) Run(TestClipboard);
-                if (args.Contains("--ui-smoke")) { Run(TestSettingsWindow); Run(TestTrayLifecycle); Run(TestInstanceTrayShutdown); Run(TestSettingsImprovements); }
+                if (args.Contains("--ui-smoke")) { Run(TestSaveDialogLayout); Run(TestSettingsWindow); Run(TestTrayLifecycle); Run(TestInstanceTrayShutdown); Run(TestSettingsImprovements); }
                 if (args.Contains("--dpi-smoke")) Run(TestDpi);
                 Console.WriteLine("PASS: " + assertions + " assertions"); return 0;
             }
             catch (Exception ex) { Console.Error.WriteLine(ex); return 1; }
         }
+        private static void TestSaveDialogLayout()
+        {
+            var layouts = Layouts.Installed();
+            IntPtr added = IntPtr.Zero;
+            if (layouts.Count < 2)
+            {
+                added = LoadKeyboardLayout((layouts[0].Handle.ToInt64() & 0xffff) == 0x419 ? "00000409" : "00000419", 0);
+                layouts = Layouts.Installed();
+            }
+            try
+            {
+                Check(layouts.Count > 1, "Save dialog test requires two installed layouts");
+                TestSaveDialogs(layouts);
+            }
+            finally { if (added != IntPtr.Zero) UnloadKeyboardLayout(added); }
+        }
+        private static void TestSaveDialogs(List<KeyboardLayout> layouts)
+        {
+            foreach (bool modern in new[] { true, false })
+            using (var owner = new Form { Text = "L-Switcher save dialog test" })
+            using (var dialog = new SaveFileDialog { AutoUpgradeEnabled = modern, FileName = "layout-test.txt", AddExtension = false })
+            using (var timer = new Timer { Interval = 100 })
+            {
+                Exception failure = null; IntPtr window = IntPtr.Zero, original = IntPtr.Zero;
+                IntPtr requested = IntPtr.Zero; int phase = 0, ticks = 0;
+                owner.Show(); FocusTestWindow(owner.Handle);
+                timer.Tick += (s, e) =>
+                {
+                    try
+                    {
+                        if (++ticks > 80) throw new Exception("Save dialog layout switch timed out");
+                        if (phase == 0)
+                        {
+                            IntPtr candidate = Native.GetForegroundWindow();
+                            if (candidate == owner.Handle || candidate == IntPtr.Zero || GetWindowProcess(candidate) != (uint)System.Diagnostics.Process.GetCurrentProcess().Id) return;
+                            window = candidate;
+                            uint pid; Equal((uint)System.Diagnostics.Process.GetCurrentProcess().Id, GetWindowProcess(window), "Test dialog belongs to test process");
+                            original = Native.GetKeyboardLayout(Native.GetWindowThreadProcessId(window, out pid));
+                            requested = layouts.First(l => l.Handle != original).Handle;
+                            var info = new Native.GUITHREADINFO { cbSize = (uint)Marshal.SizeOf(typeof(Native.GUITHREADINFO)) };
+                            Check(Native.GetGUIThreadInfo(Native.GetWindowThreadProcessId(window, out pid), ref info), "Dialog focus is available");
+                            Check(info.hwndFocus != window && Native.IsChild(window, info.hwndFocus), "Save dialog has a focused child control");
+                            Check(!Layouts.RequestLayout(owner.Handle, requested), "Inactive owner cannot switch dialog layout");
+                            // Probe the old top-level routing before testing the production route.
+                            Native.PostMessage(window, 0x50, IntPtr.Zero, requested); phase = 1; ticks = 0;
+                        }
+                        else if (phase == 1 && ticks >= 3)
+                        {
+                            Console.WriteLine("Save dialog (modern=" + modern + ") old route switched: " + (Layouts.ForegroundLayout() == requested));
+                            // Restore first so success cannot be inherited from the old route.
+                            Check(Layouts.RequestLayout(window, original), "Restore dialog layout before regression check"); phase = 2;
+                        }
+                        else if (phase == 2 && Layouts.ForegroundLayout() == original)
+                        {
+                            Check(Layouts.RequestLayout(window, requested), "Request layout through focused save-dialog control"); phase = 3;
+                        }
+                        else if (phase == 3 && Layouts.ForegroundLayout() == requested)
+                        {
+                            Check(true, "Save dialog switches to requested layout");
+                            Check(Layouts.RequestLayout(window, original), "Restore original dialog layout"); phase = 4;
+                        }
+                        else if (phase == 4 && Layouts.ForegroundLayout() == original)
+                        { timer.Stop(); Native.PostMessage(window, 0x10, IntPtr.Zero, IntPtr.Zero); }
+                    }
+                    catch (Exception ex)
+                    {
+                        failure = ex; timer.Stop();
+                        if (window != IntPtr.Zero && window != owner.Handle)
+                        { if (original != IntPtr.Zero) Layouts.RequestLayout(window, original); Native.PostMessage(window, 0x10, IntPtr.Zero, IntPtr.Zero); }
+                        else owner.Close();
+                    }
+                };
+                timer.Start(); dialog.ShowDialog(owner); timer.Stop(); owner.Close();
+                if (failure != null) throw failure;
+                Equal(4, phase, "Save dialog regression completed without saving a file");
+            }
+        }
+        private static uint GetWindowProcess(IntPtr window) { uint pid; Native.GetWindowThreadProcessId(window, out pid); return pid; }
         private static void TestTaps()
         {
             var taps = new TapTracker(); taps.Down(0xa2, 0); Check(taps.Up(0xa2, 250, 300), "Short standalone Ctrl fires");
