@@ -55,6 +55,20 @@ namespace LSwitcher
             return result;
         }
         internal static IntPtr ForegroundLayout() { uint pid; return Native.GetKeyboardLayout(Native.GetWindowThreadProcessId(Native.GetForegroundWindow(), out pid)); }
+        internal static bool RequestLayout(IntPtr window, IntPtr layout)
+        {
+            if (window == IntPtr.Zero || window != Native.GetForegroundWindow()) return false;
+            uint pid; uint thread = Native.GetWindowThreadProcessId(window, out pid);
+            if (thread == 0) return false;
+            var info = new Native.GUITHREADINFO { cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(Native.GUITHREADINFO)) };
+            IntPtr target = window;
+            // Dialogs may handle the request differently from their focused edit control.
+            // Follow Windows' input-language routing without attaching input queues.
+            if (Native.GetGUIThreadInfo(thread, ref info) && info.hwndFocus != IntPtr.Zero &&
+                (info.hwndFocus == window || Native.IsChild(window, info.hwndFocus))) target = info.hwndFocus;
+            if (window != Native.GetForegroundWindow()) return false;
+            return Native.PostMessage(target, 0x50, IntPtr.Zero, layout);
+        }
         internal static Dictionary<char, char> BuildMap(IntPtr from, IntPtr to)
         {
             var candidates = new Dictionary<char, HashSet<char>>();

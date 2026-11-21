@@ -32,7 +32,7 @@ namespace LSwitcher
             {
                 if (target != Native.GetForegroundWindow() || engine.Paused || engine.Excluded(target)) return;
                 var layout = Layouts.Installed().FirstOrDefault(l => l.Id == binding.LayoutId);
-                if (layout != null) Native.PostMessage(target, 0x50, IntPtr.Zero, layout.Handle);
+                if (layout != null) Layouts.RequestLayout(target, layout.Handle);
             }));
             engine.ConversionRequested += target => dispatcher.BeginInvoke((Action)(() => { if (!engine.Paused && !engine.Excluded(target)) conversion.Run(target, settings.Clone()); }));
             engine.CaseRequested += (mode, target) => dispatcher.BeginInvoke((Action)(() => { if (!engine.Paused && !engine.Excluded(target)) conversion.RunCase(target, mode); }));
