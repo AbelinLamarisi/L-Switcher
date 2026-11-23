@@ -101,13 +101,21 @@ namespace LSwitcher
         private CheckBox startup;
         private CheckBox deselectAfterConversion;
         private readonly ListBox exclusions = new ListBox { Dock = DockStyle.Fill, HorizontalScrollbar = true };
-        internal SettingsForm(Settings settings, HotkeyEngine engine, Action<Settings> save, Action<string, string> showMessage = null)
+        private readonly Point? savedLocation;
+        internal SettingsForm(Settings settings, HotkeyEngine engine, Action<Settings> save, Action<string, string> showMessage = null, Point? savedLocation = null)
         {
             draft = settings.Clone(); this.engine = engine; this.save = save;
             this.showMessage = showMessage ?? ((title, message) => MessageBox.Show(this, message, title, MessageBoxButtons.OK, MessageBoxIcon.Warning));
             Text = "L-Switcher Settings"; ClientSize = new Size(800, 650);
             FormBorderStyle = FormBorderStyle.FixedDialog; MaximizeBox = false;
             StartPosition = FormStartPosition.CenterScreen;
+            var screen = savedLocation.HasValue ? Screen.FromPoint(savedLocation.Value) : null;
+            if (screen != null && screen.WorkingArea.Contains(savedLocation.Value))
+            {
+                this.savedLocation = savedLocation;
+                StartPosition = FormStartPosition.Manual;
+                Location = CenterIn(screen.WorkingArea);
+            }
             var layoutsTab = new TabPage("Layouts") { Padding = new Padding(10) };
             bindingRows.BackColor = SystemColors.Window;
             bindingRows.Padding = new Padding(8);
@@ -178,6 +186,19 @@ namespace LSwitcher
             appliedSignature = Signature(settings); initialized = true;
             foreach (var combo in AllControls(this).OfType<ComboBox>()) combo.SelectedIndexChanged += (s, e) => RefreshDraft();
             startup.CheckedChanged += (s, e) => RefreshDraft(); tap.ValueChanged += (s, e) => RefreshDraft(); RefreshDraft();
+        }
+        protected override void OnLoad(EventArgs e)
+        {
+            // The handle has been created and DpiForm has applied the monitor's scale.
+            var area = Screen.FromHandle(Handle).WorkingArea;
+            Location = savedLocation.HasValue && area.Contains(new Rectangle(savedLocation.Value, Size))
+                ? savedLocation.Value : CenterIn(area);
+            base.OnLoad(e);
+        }
+        private Point CenterIn(Rectangle area)
+        {
+            return new Point(area.Left + Math.Max(0, (area.Width - Width) / 2),
+                             area.Top + Math.Max(0, (area.Height - Height) / 2));
         }
         private static FlowLayoutPanel Vertical() { return new FlowLayoutPanel { Dock = DockStyle.Fill, FlowDirection = FlowDirection.TopDown, WrapContents = false, AutoScroll = true }; }
         private static IEnumerable<Control> AllControls(Control parent)
