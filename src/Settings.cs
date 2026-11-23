@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -106,6 +108,39 @@ namespace LSwitcher
         internal string LoadWarning;
         internal bool Exists { get { return File.Exists(FilePath); } }
         internal SettingsStore(string path = null) { FilePath = path ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "L-Switcher", "settings.json"); }
+        private string WindowPositionPath => Path.ChangeExtension(FilePath, ".window");
+        internal Point? LoadWindowPosition()
+        {
+            try
+            {
+                var coordinates = File.ReadAllText(WindowPositionPath).Split(',');
+                if (coordinates.Length == 2 &&
+                    int.TryParse(coordinates[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int x) &&
+                    int.TryParse(coordinates[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out int y))
+                    return new Point(x, y);
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+            return null;
+        }
+        internal void SaveWindowPosition(Point location)
+        {
+            string path = WindowPositionPath;
+            string temp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(path));
+                try
+                {
+                    File.WriteAllText(temp, FormattableString.Invariant($"{location.X},{location.Y}"));
+                    if (File.Exists(path)) File.Replace(temp, path, null);
+                    else File.Move(temp, path);
+                }
+                finally { File.Delete(temp); }
+            }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
         internal Settings Load()
         {
             if (!Exists) return new Settings();

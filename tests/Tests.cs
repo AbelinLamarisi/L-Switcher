@@ -405,8 +405,10 @@ namespace LSwitcher
         private static void TestTrayLifecycle()
         {
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "unsaved-" + Guid.NewGuid().ToString("N"), "settings.json");
+            var store = new SettingsStore(path);
+            Point moved = Point.Empty;
             using (var activation = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.AutoReset))
-            using (var context = new TrayApplication(activation, new SettingsStore(path)))
+            using (var context = new TrayApplication(activation, store))
             using (var timer = new Timer { Interval = 500 })
             {
                 Exception failure = null; int tick = 0;
@@ -415,8 +417,22 @@ namespace LSwitcher
                     try
                     {
                         Equal(1, Application.OpenForms.Count, "First launch opens one settings window");
-                        if (tick++ == 0) { activation.Set(); return; }
-                        Equal(1, Application.OpenForms.Count, "Activation event reuses existing settings window");
+                        var form = Application.OpenForms[0];
+                        if (tick++ == 0)
+                        {
+                            CheckCentered(form, "First launch centers the scaled settings window");
+                            var area = Screen.FromHandle(form.Handle).WorkingArea;
+                            moved = area.Location;
+                            form.Location = moved;
+                            activation.Set(); return;
+                        }
+                        Equal(moved, form.Location, "Activation preserves the window position");
+                        if (tick == 2)
+                        {
+                            form.Close();
+                            Equal<Point?>(moved, new SettingsStore(path).LoadWindowPosition(), "Closing saves the moved position to disk");
+                            activation.Set(); return;
+                        }
                     }
                     catch (Exception ex) { failure = ex; }
                     timer.Stop(); context.ExitThread();
@@ -424,6 +440,27 @@ namespace LSwitcher
                 timer.Start(); Application.Run(context); if (failure != null) throw failure;
             }
             Check(!File.Exists(path), "Closing without apply does not create settings");
+            var restartedStore = new SettingsStore(path);
+            using (var engine = new HotkeyEngine(new Settings()))
+            {
+                using (var form = new SettingsForm(new Settings(), engine, _ => { }, savedLocation: restartedStore.LoadWindowPosition()))
+                {
+                    form.Show();
+                    Equal(moved, form.Location, "A new settings window restores coordinates from disk");
+                }
+                restartedStore.SaveWindowPosition(new Point(int.MaxValue, int.MaxValue));
+                using (var form = new SettingsForm(new Settings(), engine, _ => { }, savedLocation: restartedStore.LoadWindowPosition()))
+                {
+                    form.Show();
+                    CheckCentered(form, "An off-screen saved position falls back to the center");
+                }
+            }
+        }
+        private static void CheckCentered(Form form, string message)
+        {
+            var area = Screen.FromHandle(form.Handle).WorkingArea;
+            Check(Math.Abs(form.Left - area.Left - (area.Right - form.Right)) <= 1 &&
+                  Math.Abs(form.Top - area.Top - (area.Bottom - form.Bottom)) <= 1, message);
         }
     }
 }

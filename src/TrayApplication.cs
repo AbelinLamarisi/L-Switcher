@@ -68,10 +68,18 @@ namespace LSwitcher
                 SettingsStore.SetStartup(value.StartWithWindows);
                 try { store.Save(value); } catch { SettingsStore.SetStartup(settings.StartWithWindows); throw; }
                 settings = value.Clone(); engine.Settings = settings; engine.Reset();
-            });
+            }, savedLocation: store.LoadWindowPosition());
             engine.SettingsWindow = form.Handle;
-            form.FormClosed += (s, e) => { form.Dispose(); form = null; engine.Capture = null; engine.SettingsWindow = IntPtr.Zero; engine.Reset(); };
+            form.FormClosed += (s, e) =>
+            {
+                SaveSettingsWindowPosition();
+                form.Dispose(); form = null; engine.Capture = null; engine.SettingsWindow = IntPtr.Zero; engine.Reset();
+            };
             form.Show(); form.Activate();
+        }
+        private void SaveSettingsWindowPosition()
+        {
+            store.SaveWindowPosition(form.WindowState == FormWindowState.Normal ? form.Location : form.RestoreBounds.Location);
         }
         private void UpdateTray()
         {
@@ -91,7 +99,12 @@ namespace LSwitcher
         }
         protected override void Dispose(bool disposing)
         {
-            if (disposing) { timer.Stop(); timer.Dispose(); engine.Dispose(); form?.Dispose(); tray.Visible = false; tray.ContextMenuStrip?.Dispose(); tray.Dispose(); icon?.Dispose(); dispatcher.Dispose(); }
+            if (disposing)
+            {
+                timer.Stop(); timer.Dispose(); engine.Dispose();
+                if (form != null) { SaveSettingsWindowPosition(); form.Dispose(); form = null; }
+                tray.Visible = false; tray.ContextMenuStrip?.Dispose(); tray.Dispose(); icon?.Dispose(); dispatcher.Dispose();
+            }
             base.Dispose(disposing);
         }
     }
